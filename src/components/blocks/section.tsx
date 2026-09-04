@@ -1,0 +1,25 @@
+import { cn } from "@/lib/cn";
+
+export function Section({
+  children,
+  className,
+  id,
+}: {
+  children: React.ReactNode;
+  className?: string;
+  id?: string;
+}) {
+  return (
+    <section id={id} data-reveal className={cn("px-4 py-18 lg:px-8 lg:py-28", className)}>
+      <div className="mx-auto max-w-7xl">{children}</div>
+    </section>
+  );
+}
+
+export function Kicker({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="eyebrow">
+      {children}
+    </p>
+  );
+}

@@ -1,0 +1,123 @@
+import { relations } from "drizzle-orm";
+import {
+  boolean,
+  integer,
+  jsonb,
+  pgTable,
+  text,
+  timestamp,
+  unique,
+  uuid,
+} from "drizzle-orm/pg-core";
+import { ambassadorStatusEnum } from "@/db/schema/enums";
+import { users } from "@/db/schema/users";
+
+export const ambassadors = pgTable("ambassadors", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  fullName: text("full_name").notNull(),
+  email: text("email").notNull().unique(),
+  phone: text("phone"),
+  country: text("country").notNull(),
+  countryCode: text("country_code").notNull(),
+  region: text("region"),
+  profession: text("profession"),
+  areasOfInterest: jsonb("areas_of_interest").$type<string[]>().notNull().default([]),
+  whyJoin: text("why_join").notNull(),
+  volunteerInterests: jsonb("volunteer_interests")
+    .$type<string[]>()
+    .notNull()
+    .default([]),
+  photoUrl: text("photo_url"),
+  status: ambassadorStatusEnum("status").notNull().default("applied"),
+  consentToDirectory: boolean("consent_to_directory").notNull().default(false),
+  principlesAgreedAt: timestamp("principles_agreed_at", {
+    withTimezone: true,
+    mode: "date",
+  }),
+  contributions: text("contributions"),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true, mode: "date" }),
+  reviewedById: uuid("reviewed_by_id").references(() => users.id, {
+    onDelete: "set null",
+  }),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+    .notNull()
+    .defaultNow(),
+});
+
+export const trainingModules = pgTable("training_modules", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  content: text("content"),
+});
+
+export const ambassadorTrainingProgress = pgTable(
+  "ambassador_training_progress",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    ambassadorId: uuid("ambassador_id")
+      .notNull()
+      .references(() => ambassadors.id, { onDelete: "cascade" }),
+    moduleId: uuid("module_id")
+      .notNull()
+      .references(() => trainingModules.id, { onDelete: "cascade" }),
+    completedAt: timestamp("completed_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    unique("ambassador_module_unique").on(table.ambassadorId, table.moduleId),
+  ],
+);
+
+export const certificates = pgTable("certificates", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  ambassadorId: uuid("ambassador_id")
+    .notNull()
+    .references(() => ambassadors.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  issuedAt: timestamp("issued_at", { withTimezone: true, mode: "date" })
+    .notNull()
+    .defaultNow(),
+  fileUrl: text("file_url"),
+});
+
+export const ambassadorsRelations = relations(ambassadors, ({ one, many }) => ({
+  user: one(users, { fields: [ambassadors.userId], references: [users.id] }),
+  training: many(ambassadorTrainingProgress),
+  certificates: many(certificates),
+}));
+
+export const trainingModulesRelations = relations(
+  trainingModules,
+  ({ many }) => ({
+    progress: many(ambassadorTrainingProgress),
+  }),
+);
+
+export const ambassadorTrainingProgressRelations = relations(
+  ambassadorTrainingProgress,
+  ({ one }) => ({
+    ambassador: one(ambassadors, {
+      fields: [ambassadorTrainingProgress.ambassadorId],
+      references: [ambassadors.id],
+    }),
+    module: one(trainingModules, {
+      fields: [ambassadorTrainingProgress.moduleId],
+      references: [trainingModules.id],
+    }),
+  }),
+);
+
+export const certificatesRelations = relations(certificates, ({ one }) => ({
+  ambassador: one(ambassadors, {
+    fields: [certificates.ambassadorId],
+    references: [ambassadors.id],
+  }),
+}));
