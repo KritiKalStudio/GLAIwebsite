@@ -363,23 +363,27 @@ export async function saveSettings(formData: FormData) {
       languages: JSON.parse(str(formData, "languages") || "[]"),
       navigation: rewriteNavHrefs(JSON.parse(str(formData, "navigation") || "[]")),
       headerCtas: {
-        ...headerCtas,
+        donateLabel: headerCtas.donateLabel ?? "Donate",
         donateHref: rewriteLegacyApplyHref(headerCtas.donateHref ?? "/donate"),
+        joinLabel: headerCtas.joinLabel ?? "Become a Love Ambassador",
         joinHref: rewriteLegacyApplyHref(headerCtas.joinHref ?? "/love-ambassadors"),
       },
       footer: {
-        ...footer,
+        tagline: footer.tagline ?? "",
         columns: (footer.columns ?? []).map((column) => ({
-          ...column,
+          title: column.title,
           links: (column.links ?? []).map((link) => ({
-            ...link,
+            label: link.label,
             href: rewriteLegacyApplyHref(link.href),
           })),
         })),
         legalLinks: (footer.legalLinks ?? []).map((link) => ({
-          ...link,
+          label: link.label,
           href: rewriteLegacyApplyHref(link.href),
         })),
+        newsletterLabel: footer.newsletterLabel ?? "Stay connected",
+        newsletterPlaceholder: footer.newsletterPlaceholder ?? "Your email address",
+        copyright: footer.copyright ?? "",
       },
       contact: JSON.parse(str(formData, "contact") || "{}"),
       defaultSeo: JSON.parse(str(formData, "defaultSeo") || "{}"),
