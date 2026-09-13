@@ -1,10 +1,13 @@
 import { saveStory } from "@/app/actions/admin";
+import { ImagePicker } from "@/components/admin/image-picker";
 import { Button } from "@/components/ui/button";
 import { Field, Select, TextArea, TextInput } from "@/components/ui/field";
 import { RichTextEditor } from "@/components/admin/rich-text-editor";
+import type { MediaChoice } from "@/lib/content/media";
 
 export function StoryForm({
   story,
+  media,
 }: {
   story?: {
     id: string;
@@ -21,6 +24,7 @@ export function StoryForm({
     involvesMinors: boolean;
     safeguardingReviewed: boolean;
   };
+  media: MediaChoice[];
 }) {
   return (
     <form action={saveStory} className="mt-6 grid max-w-3xl gap-4">
@@ -55,6 +59,7 @@ export function StoryForm({
       <Field label="Body" name="body">
         <RichTextEditor name="body" defaultValue={story?.body} />
       </Field>
+      <ImagePicker name="featuredImageUrl" label="Picture" defaultValue={story?.featuredImageUrl} assets={media} />
       <Field label="Author name" name="authorName">
         <TextInput id="authorName" name="authorName" defaultValue={story?.authorName ?? ""} />
       </Field>

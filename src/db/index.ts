@@ -11,7 +11,9 @@ const globalForDb = globalThis as unknown as {
 export function getSql() {
   if (!globalForDb.sql) {
     globalForDb.sql = postgres(requiredEnv("DATABASE_URL"), {
-      max: 1,
+      // Session pooler (:5432) can keep a small pool. max: 1 serialized every
+      // layout query (settings + page + session) into a multi-second waterfall.
+      max: 4,
       prepare: false,
       ssl: "require",
       idle_timeout: 20,

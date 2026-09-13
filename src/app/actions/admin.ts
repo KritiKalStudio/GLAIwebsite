@@ -5,6 +5,7 @@ import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
+import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
 import {
   ambassadors,
   campaigns,
@@ -19,6 +20,7 @@ import {
   notificationTemplates,
   pageBlocks,
   pages,
+  people,
   programs,
   projects,
   roles,
@@ -28,12 +30,15 @@ import {
   users,
   volunteerApplications,
   volunteerOpportunities,
+  youtubeVideos,
 } from "@/db/schema";
 import { recordAudit } from "@/lib/audit";
 import { getSessionUser, hashPassword, hasPermission, isAdmin, isPrimaryAdmin } from "@/lib/auth";
 import { putObject } from "@/lib/r2";
 import { sendTemplatedEmail } from "@/lib/email";
 import { sanitizeRichText } from "@/lib/rich-text";
+import { rewriteLegacyApplyHref, rewriteNavHrefs } from "@/lib/nav";
+import { fetchYoutubeOEmbed, youtubeIdFromUrl, youtubeThumbnailUrl, youtubeWatchUrl } from "@/lib/youtube";
 
 async function actor(permission?: string) {
   const user = await getSessionUser();
@@ -79,11 +84,13 @@ export async function savePage(formData: FormData) {
   if (id) {
     await getDb().update(pages).set(values).where(eq(pages.id, id));
     await recordAudit({ actorId: user.id, action: "page.update", entityType: "page", entityId: id });
+    revalidateContent(CACHE_TAGS.pages);
     revalidatePath("/admin/pages");
     redirect(`/admin/pages/${id}`);
   }
   const [created] = await getDb().insert(pages).values(values).returning();
   await recordAudit({ actorId: user.id, action: "page.create", entityType: "page", entityId: created.id });
+  revalidateContent(CACHE_TAGS.pages);
   revalidatePath("/admin/pages");
   redirect(`/admin/pages/${created.id}`);
 }
@@ -110,6 +117,7 @@ export async function savePageBlocks(formData: FormData) {
     );
   }
   await recordAudit({ actorId: user.id, action: "page.blocks", entityType: "page", entityId: pageId });
+  revalidateContent(CACHE_TAGS.pages);
   revalidatePath("/");
   revalidatePath("/admin/pages");
   redirect(`/admin/pages/${pageId}`);
@@ -128,6 +136,7 @@ export async function savePageRichContent(formData: FormData) {
     await getDb().insert(pageBlocks).values({ pageId, type: "rich_text", sortOrder: (existing.at(-1)?.sortOrder ?? -1) + 1, data });
   }
   await recordAudit({ actorId: user.id, action: "page.rich_content", entityType: "page", entityId: pageId });
+  revalidateContent(CACHE_TAGS.pages);
   revalidatePath("/");
   revalidatePath("/admin/pages");
   redirect(`/admin/pages/${pageId}`);
@@ -165,11 +174,13 @@ export async function saveStory(formData: FormData) {
   if (id) {
     await getDb().update(stories).set(values).where(eq(stories.id, id));
     await recordAudit({ actorId: user.id, action: "story.update", entityType: "story", entityId: id });
+    revalidateContent(CACHE_TAGS.stories);
     revalidatePath("/stories");
     redirect(`/admin/stories/${id}`);
   }
   const [created] = await getDb().insert(stories).values(values).returning();
   await recordAudit({ actorId: user.id, action: "story.create", entityType: "story", entityId: created.id });
+  revalidateContent(CACHE_TAGS.stories);
   redirect(`/admin/stories/${created.id}`);
 }
 
@@ -185,20 +196,66 @@ export async function saveProgram(formData: FormData) {
     process: str(formData, "process") || null,
     outcomes: str(formData, "outcomes") || null,
     applyCtaLabel: str(formData, "applyCtaLabel") || null,
-    applyHref: str(formData, "applyHref") || null,
+    applyHref: rewriteLegacyApplyHref(str(formData, "applyHref") || "") || null,
     featuredImageUrl: str(formData, "featuredImageUrl") || null,
     youtubeUrl: str(formData, "youtubeUrl") || null,
+    startsAt: str(formData, "startsAt") ? new Date(str(formData, "startsAt")) : null,
+    endsAt: str(formData, "endsAt") ? new Date(str(formData, "endsAt")) : null,
+    goalAmount: str(formData, "goalAmount") || null,
+    currency: str(formData, "currency") || "NGN",
     status: str(formData, "status") as never,
     updatedAt: new Date(),
   };
+  let programId = id;
   if (id) {
     await getDb().update(programs).set(values).where(eq(programs.id, id));
     await recordAudit({ actorId: user.id, action: "program.update", entityType: "program", entityId: id });
-    redirect(`/admin/programs/${id}`);
+  } else {
+    const [created] = await getDb().insert(programs).values(values).returning();
+    programId = created.id;
+    await recordAudit({ actorId: user.id, action: "program.create", entityType: "program", entityId: created.id });
   }
-  const [created] = await getDb().insert(programs).values(values).returning();
-  await recordAudit({ actorId: user.id, action: "program.create", entityType: "program", entityId: created.id });
-  redirect(`/admin/programs/${created.id}`);
+  const [program] = await getDb().select().from(programs).where(eq(programs.id, programId)).limit(1);
+  if (program) {
+    const campaignValues = {
+      slug: program.slug,
+      name: program.name,
+      description: program.shortDescription,
+      programId: program.id,
+      goalAmount: program.goalAmount,
+      currency: program.currency,
+      featuredImageUrl: program.featuredImageUrl,
+      startsAt: program.startsAt,
+      endsAt: program.endsAt,
+      status: program.status === "published" ? ("published" as const) : ("draft" as const),
+      updatedAt: new Date(),
+    };
+    const [existingCampaign] = await getDb()
+      .select({ id: campaigns.id })
+      .from(campaigns)
+      .where(eq(campaigns.programId, program.id))
+      .limit(1);
+    if (existingCampaign) {
+      await getDb().update(campaigns).set(campaignValues).where(eq(campaigns.id, existingCampaign.id));
+    } else {
+      await getDb()
+        .insert(campaigns)
+        .values(campaignValues)
+        .onConflictDoUpdate({ target: campaigns.slug, set: campaignValues });
+    }
+  }
+  revalidateContent(CACHE_TAGS.programs, CACHE_TAGS.donations);
+  redirect(`/admin/programs/${programId}`);
+}
+
+export async function deleteProgram(formData: FormData) {
+  const user = await actor("programs");
+  const id = str(formData, "id");
+  if (!id) return;
+  await getDb().delete(programs).where(eq(programs.id, id));
+  await recordAudit({ actorId: user.id, action: "program.delete", entityType: "program", entityId: id });
+  revalidateContent(CACHE_TAGS.programs, CACHE_TAGS.donations);
+  redirect("/admin/programs");
 }
 
 export async function saveProject(formData: FormData) {
@@ -220,10 +277,12 @@ export async function saveProject(formData: FormData) {
   if (id) {
     await getDb().update(projects).set(values).where(eq(projects.id, id));
     await recordAudit({ actorId: user.id, action: "project.update", entityType: "project", entityId: id });
+    revalidateContent(CACHE_TAGS.projects);
     redirect(`/admin/projects/${id}`);
   }
   const [created] = await getDb().insert(projects).values(values).returning();
   await recordAudit({ actorId: user.id, action: "project.create", entityType: "project", entityId: created.id });
+  revalidateContent(CACHE_TAGS.projects);
   redirect(`/admin/projects/${created.id}`);
 }
 
@@ -253,10 +312,12 @@ export async function saveEvent(formData: FormData) {
   if (id) {
     await getDb().update(events).set(values).where(eq(events.id, id));
     await recordAudit({ actorId: user.id, action: "event.update", entityType: "event", entityId: id });
+    revalidateContent(CACHE_TAGS.events);
     redirect(`/admin/events/${id}`);
   }
   const [created] = await getDb().insert(events).values(values).returning();
   await recordAudit({ actorId: user.id, action: "event.create", entityType: "event", entityId: created.id });
+  revalidateContent(CACHE_TAGS.events);
   redirect(`/admin/events/${created.id}`);
 }
 
@@ -273,28 +334,69 @@ export async function saveImpactStat(formData: FormData) {
     })
     .where(eq(impactStats.id, id));
   await recordAudit({ actorId: user.id, action: "stat.update", entityType: "impact_stat", entityId: id });
+  revalidateContent(CACHE_TAGS.impact);
   revalidatePath("/admin/impact");
   revalidatePath("/");
 }
 
 export async function saveSettings(formData: FormData) {
   const user = await actor("settings");
+  const headerCtas = JSON.parse(str(formData, "headerCtas") || "{}") as {
+    donateLabel?: string;
+    donateHref?: string;
+    joinLabel?: string;
+    joinHref?: string;
+  };
+  const footer = JSON.parse(str(formData, "footer") || "{}") as {
+    tagline?: string;
+    columns?: { title: string; links: { label: string; href: string }[] }[];
+    legalLinks?: { label: string; href: string }[];
+    newsletterLabel?: string;
+    newsletterPlaceholder?: string;
+    copyright?: string;
+  };
   await getDb()
     .update(siteSettings)
     .set({
       orgName: str(formData, "orgName"),
       tagline: str(formData, "tagline"),
       languages: JSON.parse(str(formData, "languages") || "[]"),
-      navigation: JSON.parse(str(formData, "navigation") || "[]"),
-      headerCtas: JSON.parse(str(formData, "headerCtas") || "{}"),
-      footer: JSON.parse(str(formData, "footer") || "{}"),
+      navigation: rewriteNavHrefs(JSON.parse(str(formData, "navigation") || "[]")),
+      headerCtas: {
+        ...headerCtas,
+        donateHref: rewriteLegacyApplyHref(headerCtas.donateHref ?? "/donate"),
+        joinHref: rewriteLegacyApplyHref(headerCtas.joinHref ?? "/love-ambassadors"),
+      },
+      footer: {
+        ...footer,
+        columns: (footer.columns ?? []).map((column) => ({
+          ...column,
+          links: (column.links ?? []).map((link) => ({
+            ...link,
+            href: rewriteLegacyApplyHref(link.href),
+          })),
+        })),
+        legalLinks: (footer.legalLinks ?? []).map((link) => ({
+          ...link,
+          href: rewriteLegacyApplyHref(link.href),
+        })),
+      },
       contact: JSON.parse(str(formData, "contact") || "{}"),
       defaultSeo: JSON.parse(str(formData, "defaultSeo") || "{}"),
       designTokens: JSON.parse(str(formData, "designTokens") || "{}"),
+      payment: {
+        bank: {
+          bankName: str(formData, "bankName"),
+          accountName: str(formData, "bankAccountName"),
+          accountNumber: str(formData, "bankAccountNumber"),
+          instructions: str(formData, "bankInstructions"),
+        },
+      },
       updatedAt: new Date(),
     })
     .where(eq(siteSettings.id, "default"));
   await recordAudit({ actorId: user.id, action: "settings.update", entityType: "settings", entityId: "default" });
+  revalidateContent(CACHE_TAGS.settings);
   revalidatePath("/");
   revalidatePath("/admin/settings");
 }
@@ -332,10 +434,12 @@ export async function saveCampaign(formData: FormData) {
   };
   if (id) {
     await getDb().update(campaigns).set(values).where(eq(campaigns.id, id));
+    revalidateContent(CACHE_TAGS.donations);
     redirect("/admin/donations");
   }
   await getDb().insert(campaigns).values(values);
   await recordAudit({ actorId: user.id, action: "campaign.save", entityType: "campaign" });
+  revalidateContent(CACHE_TAGS.donations);
   redirect("/admin/donations");
 }
 
@@ -374,16 +478,28 @@ export async function declineVolunteer(formData: FormData) {
 
 export async function saveOpportunity(formData: FormData) {
   const user = await actor("volunteers");
-  await getDb().insert(volunteerOpportunities).values({
+  const id = str(formData, "id");
+  const slots = Math.max(0, Number(str(formData, "slots") || 10) || 0);
+  const values = {
     slug: str(formData, "slug"),
     title: str(formData, "title"),
     description: str(formData, "description"),
     location: str(formData, "location") || null,
-    status: "published",
+    slots,
+    status: (str(formData, "status") || "published") as "draft" | "preview" | "published" | "archived",
     publishedAt: new Date(),
-  });
-  await recordAudit({ actorId: user.id, action: "opportunity.create", entityType: "volunteer_opportunity" });
+  };
+  if (id) {
+    await getDb().update(volunteerOpportunities).set(values).where(eq(volunteerOpportunities.id, id));
+    await recordAudit({ actorId: user.id, action: "opportunity.update", entityType: "volunteer_opportunity", entityId: id });
+  } else {
+    await getDb().insert(volunteerOpportunities).values(values);
+    await recordAudit({ actorId: user.id, action: "opportunity.create", entityType: "volunteer_opportunity" });
+  }
+  revalidateContent(CACHE_TAGS.volunteers);
   revalidatePath("/admin/volunteers");
+  revalidatePath("/get-involved/volunteer");
+  revalidatePath("/dashboard");
 }
 
 export async function saveUser(formData: FormData) {
@@ -487,6 +603,9 @@ export async function fulfillDataDeletion(formData: FormData) {
       region: null,
       profession: null,
       whyJoin: "[redacted on request]",
+      whatsapp: null,
+      currentAddress: null,
+      organization: null,
       contributions: null,
       photoUrl: null,
       consentToDirectory: false,
@@ -540,9 +659,50 @@ export async function fulfillDataDeletion(formData: FormData) {
     entityType: "person",
     metadata: { email },
   });
+  revalidateContent(CACHE_TAGS.ambassadors);
   revalidatePath("/admin/users");
   revalidatePath("/admin/membership");
   revalidatePath("/admin/donations");
+}
+
+export async function savePerson(formData: FormData) {
+  const user = await actor("content");
+  const id = str(formData, "id");
+  const group = str(formData, "group");
+  if (!["board", "executive", "advisor"].includes(group)) {
+    throw new Error("Choose board, executive, or advisor.");
+  }
+  const values = {
+    name: str(formData, "name"),
+    position: str(formData, "position"),
+    group: group as "board" | "executive" | "advisor",
+    photoUrl: str(formData, "photoUrl") || null,
+    bio: str(formData, "bio"),
+    responsibility: str(formData, "responsibility") || null,
+    sortOrder: Number(str(formData, "sortOrder") || "0") || 0,
+    status: (str(formData, "status") || "published") as "draft" | "preview" | "published" | "archived",
+    updatedAt: new Date(),
+  };
+  if (id) {
+    await getDb().update(people).set(values).where(eq(people.id, id));
+    await recordAudit({ actorId: user.id, action: "person.update", entityType: "person", entityId: id });
+  } else {
+    const [created] = await getDb().insert(people).values(values).returning();
+    await recordAudit({ actorId: user.id, action: "person.create", entityType: "person", entityId: created.id });
+  }
+  revalidateContent(CACHE_TAGS.people);
+  revalidatePath("/admin/leadership");
+  revalidatePath("/about");
+}
+
+export async function deletePerson(formData: FormData) {
+  const user = await actor("content");
+  const id = str(formData, "id");
+  await getDb().delete(people).where(eq(people.id, id));
+  await recordAudit({ actorId: user.id, action: "person.delete", entityType: "person", entityId: id });
+  revalidateContent(CACHE_TAGS.people);
+  revalidatePath("/admin/leadership");
+  revalidatePath("/about");
 }
 
 export async function saveFaq(formData: FormData) {
@@ -554,8 +714,70 @@ export async function saveFaq(formData: FormData) {
     status: "published",
   });
   await recordAudit({ actorId: user.id, action: "faq.create", entityType: "faq" });
-  revalidatePath("/admin/pages");
+  revalidateContent(CACHE_TAGS.faqs);
+  revalidatePath("/admin/faqs");
   revalidatePath("/faq");
+}
+
+export async function deleteFaq(formData: FormData) {
+  const user = await actor("content");
+  const id = str(formData, "id");
+  await getDb().delete(faqItems).where(eq(faqItems.id, id));
+  await recordAudit({ actorId: user.id, action: "faq.delete", entityType: "faq", entityId: id });
+  revalidateContent(CACHE_TAGS.faqs);
+  revalidatePath("/admin/faqs");
+  revalidatePath("/faq");
+}
+
+export async function saveYoutubeVideo(formData: FormData) {
+  const user = await actor("content");
+  const id = str(formData, "id");
+  const youtubeUrl = str(formData, "youtubeUrl");
+  const youtubeId = youtubeIdFromUrl(youtubeUrl);
+  if (!youtubeId) {
+    throw new Error("Paste a YouTube video link (watch, youtu.be, shorts, or embed) — not a channel page.");
+  }
+  const collection = str(formData, "collection") === "news" ? "news" : "podcast";
+  const oembed = await fetchYoutubeOEmbed(youtubeWatchUrl(youtubeId));
+  const title = str(formData, "title") || oembed?.title;
+  if (!title) {
+    throw new Error("Add a title, or check that the YouTube link is public so the title can be fetched.");
+  }
+  const values = {
+    youtubeUrl: youtubeWatchUrl(youtubeId),
+    youtubeId,
+    title,
+    description: str(formData, "description"),
+    thumbnailUrl: str(formData, "thumbnailUrl") || oembed?.thumbnailUrl || youtubeThumbnailUrl(youtubeId),
+    collection,
+    sortOrder: Number(str(formData, "sortOrder") || 0) || 0,
+    status: (str(formData, "status") || "published") as "draft" | "preview" | "published" | "archived",
+    publishedAt: str(formData, "status") === "draft" ? null : new Date(),
+    updatedAt: new Date(),
+  };
+  if (id) {
+    await getDb().update(youtubeVideos).set(values).where(eq(youtubeVideos.id, id));
+    await recordAudit({ actorId: user.id, action: "video.update", entityType: "youtube_video", entityId: id });
+  } else {
+    const [created] = await getDb().insert(youtubeVideos).values(values).returning();
+    await recordAudit({ actorId: user.id, action: "video.create", entityType: "youtube_video", entityId: created.id });
+  }
+  revalidateContent(CACHE_TAGS.videos);
+  revalidatePath("/admin/podcast");
+  revalidatePath("/podcast");
+  revalidatePath("/stories");
+  redirect("/admin/podcast");
+}
+
+export async function deleteYoutubeVideo(formData: FormData) {
+  const user = await actor("content");
+  const id = str(formData, "id");
+  await getDb().delete(youtubeVideos).where(eq(youtubeVideos.id, id));
+  await recordAudit({ actorId: user.id, action: "video.delete", entityType: "youtube_video", entityId: id });
+  revalidateContent(CACHE_TAGS.videos);
+  revalidatePath("/admin/podcast");
+  revalidatePath("/podcast");
+  revalidatePath("/stories");
 }
 
 export async function uploadMedia(formData: FormData) {
@@ -564,7 +786,7 @@ export async function uploadMedia(formData: FormData) {
 }
 
 /** Uploads an editor asset to R2 and records only its metadata in the media library. */
-export async function uploadEmbeddedMedia(formData: FormData): Promise<{ url: string }> {
+export async function uploadEmbeddedMedia(formData: FormData): Promise<{ url: string; thumbnailUrl: string }> {
   const user = await actor("content");
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
@@ -586,11 +808,12 @@ export async function uploadEmbeddedMedia(formData: FormData): Promise<{ url: st
   await getDb().insert(mediaAssets).values({
     key,
     url: uploaded.url,
+    thumbnailUrl: uploaded.url,
     filename: file.name,
     mimeType: file.type || "application/octet-stream",
     byteSize: file.size,
     uploadedById: user.id,
   });
   await recordAudit({ actorId: user.id, action: "media.upload", entityType: "media", metadata: { key } });
-  return { url: uploaded.url };
+  return { url: uploaded.url, thumbnailUrl: uploaded.url };
 }

@@ -8,9 +8,8 @@ import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import type { LanguageOption, NavItem } from "@/db/schema/settings";
 
 export function MobileNav({
-  items,
-  joinHref,
-  joinLabel,
+  primaryItems,
+  exploreItems,
   donateHref,
   donateLabel,
   accountHref,
@@ -18,9 +17,8 @@ export function MobileNav({
   languages,
   locale,
 }: {
-  items: NavItem[];
-  joinHref: string;
-  joinLabel: string;
+  primaryItems: NavItem[];
+  exploreItems: NavItem[];
   donateHref: string;
   donateLabel: string;
   accountHref: string;
@@ -57,7 +55,7 @@ export function MobileNav({
           className="absolute inset-x-0 top-full border-b border-brand/10 bg-canvas px-4 py-4 shadow-lg"
         >
           <nav className="flex flex-col gap-3" aria-label="Mobile">
-            {items.map((item) => (
+            {primaryItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -67,18 +65,32 @@ export function MobileNav({
                 {item.label}
               </Link>
             ))}
+            {exploreItems.length ? (
+              <div className="mt-2 border-t border-brand/10 pt-3">
+                <p className="text-xs font-semibold tracking-[0.16em] text-accent uppercase">Explore</p>
+                <div className="mt-2 flex flex-col gap-3">
+                  {exploreItems.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="text-base font-medium text-ink"
+                      onClick={() => setOpen(false)}
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </nav>
           <div className="mt-4">
             <LanguageSwitcher languages={languages} current={locale} />
           </div>
           <div className="mt-4 flex flex-col gap-2">
-            <ButtonLink href={accountHref} variant="ghost">
+            <ButtonLink href={accountHref} variant="ghost" className="min-h-11 justify-center">
               {accountLabel}
             </ButtonLink>
-            <ButtonLink href={joinHref} variant="outline">
-              {joinLabel}
-            </ButtonLink>
-            <ButtonLink href={donateHref} variant="sunshine">
+            <ButtonLink href={donateHref} variant="sunshine" className="min-h-11 justify-center">
               {donateLabel}
             </ButtonLink>
           </div>

@@ -10,7 +10,6 @@ import { formatDate } from "@/lib/format";
 import { articleJsonLd, breadcrumbJsonLd } from "@/lib/structured-data";
 import { editorHtml, sanitizeRichText } from "@/lib/rich-text";
 
-export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,

@@ -1,6 +1,6 @@
 import { config } from "dotenv";
 import bcrypt from "bcryptjs";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 
 config({ path: ".env.local" });
 
@@ -144,10 +144,11 @@ async function seed() {
         { label: "Home", href: "/" },
         { label: "About", href: "/about" },
         { label: "Our Work", href: "/our-work" },
+        { label: "Stories & News", href: "/stories" },
+        { label: "Podcast", href: "/podcast" },
         { label: "Impact", href: "/impact" },
         { label: "Love Ambassadors", href: "/love-ambassadors" },
         { label: "Get Involved", href: "/get-involved" },
-        { label: "Stories & News", href: "/stories" },
         { label: "Resources", href: "/resources" },
       ],
       headerCtas: {
@@ -166,13 +167,16 @@ async function seed() {
               { label: "About", href: "/about" },
               { label: "Our Work", href: "/our-work" },
               { label: "Impact", href: "/impact" },
+              { label: "Love Ambassadors", href: "/love-ambassadors" },
               { label: "Transparency", href: "/transparency" },
             ],
           },
           {
             title: "Participate",
             links: [
-              { label: "Become an Ambassador", href: "/love-ambassadors/apply" },
+              { label: "Stories & News", href: "/stories" },
+              { label: "Podcast", href: "/podcast" },
+              { label: "Sign up", href: "/signup" },
               { label: "Volunteer", href: "/get-involved/volunteer" },
               { label: "Partner", href: "/get-involved/partner" },
               { label: "Events", href: "/events" },
@@ -234,6 +238,62 @@ async function seed() {
           { code: "ar", name: "العربية", isActive: false },
           { code: "pt", name: "Português", isActive: false },
         ],
+        navigation: [
+          { label: "Home", href: "/" },
+          { label: "About", href: "/about" },
+          { label: "Our Work", href: "/our-work" },
+          { label: "Stories & News", href: "/stories" },
+          { label: "Podcast", href: "/podcast" },
+          { label: "Impact", href: "/impact" },
+          { label: "Love Ambassadors", href: "/love-ambassadors" },
+          { label: "Get Involved", href: "/get-involved" },
+          { label: "Resources", href: "/resources" },
+        ],
+        footer: {
+          tagline:
+            "A global movement of people committed to love, unity, peaceful coexistence, and collective progress.",
+          columns: [
+            {
+              title: "Explore",
+              links: [
+                { label: "About", href: "/about" },
+                { label: "Our Work", href: "/our-work" },
+                { label: "Impact", href: "/impact" },
+                { label: "Love Ambassadors", href: "/love-ambassadors" },
+                { label: "Transparency", href: "/transparency" },
+              ],
+            },
+            {
+              title: "Participate",
+              links: [
+                { label: "Stories & News", href: "/stories" },
+                { label: "Podcast", href: "/podcast" },
+                { label: "Sign up", href: "/signup" },
+                { label: "Volunteer", href: "/get-involved/volunteer" },
+                { label: "Partner", href: "/get-involved/partner" },
+                { label: "Events", href: "/events" },
+              ],
+            },
+            {
+              title: "Support",
+              links: [
+                { label: "Donate", href: "/donate" },
+                { label: "Sponsor a program", href: "/donate#sponsor" },
+                { label: "Contact", href: "/contact" },
+                { label: "FAQ", href: "/faq" },
+              ],
+            },
+          ],
+          legalLinks: [
+            { label: "Terms of Use", href: "/legal/terms" },
+            { label: "Privacy Policy", href: "/legal/privacy" },
+            { label: "Cookie Policy", href: "/legal/cookies" },
+            { label: "Accessibility", href: "/legal/accessibility" },
+          ],
+          newsletterLabel: "Stay connected",
+          newsletterPlaceholder: "Your email address",
+          copyright: "Global Love Ambassadors Initiative. All rights reserved.",
+        },
         updatedAt: new Date(),
       },
     });
@@ -256,13 +316,14 @@ async function seed() {
           "Dialogue facilitation",
           "Community action design",
           "Safeguarding and code of conduct",
+          "Informed citizenship — rights, records, and nonpartisan choice",
         ],
         process:
           "Apply → review → cohort onboarding → five training modules → practicum → certification.",
         outcomes:
           "Graduates are recognized Love Ambassadors, eligible for the member portal, network directory (with consent), and community assignments.",
         applyCtaLabel: "Apply to train",
-        applyHref: "/love-ambassadors/apply",
+        applyHref: "/signup",
         featuredImageUrl: `${SAMPLE}/photo-1529156069898-49953e39b3ac?auto=format&fit=crop&w=1600&q=80`,
         sortOrder: 1,
         status: "published",
@@ -317,7 +378,7 @@ async function seed() {
         process: "Annual campaign brief → ambassador activations → public storytelling → impact recap.",
         outcomes: "Campaign stories, ambassador actions, and a public archive of the year’s work.",
         applyCtaLabel: "Join the campaign",
-        applyHref: "/love-ambassadors/apply",
+        applyHref: "/signup",
         featuredImageUrl: `${SAMPLE}/photo-1511632765486-a01980e01a18?auto=format&fit=crop&w=1600&q=80`,
         sortOrder: 4,
         status: "published",
@@ -343,11 +404,73 @@ async function seed() {
     .onConflictDoNothing({ target: programs.slug })
     .returning();
 
+  const civicEducation = {
+    slug: "civic-education",
+    name: "Civic Education",
+    shortDescription:
+      "Nonpartisan political education so citizens know their rights, can test a promise, and choose leaders for themselves.",
+    purpose:
+      "Help citizens identify fraudulent or incompetent leadership and qualified public-interest leadership — without GLAI projecting, funding, or campaigning for any candidate or party. The work confronts political marginalization, corruption, unhealthy nepotism, and fake campaign promises through politically neutral sensitization.",
+    whoCanParticipate:
+      "Adults, community groups, campuses, and faith communities. Party membership is neither required nor useful. GLAI does not accept partisan briefing or candidate materials.",
+    curriculum: [
+      "Citizens’ rights and public duty",
+      "How to read a campaign promise against a record",
+      "Spotting corruption, nepotism, and patronage",
+      "Political marginalization — who is locked out, and why it matters",
+      "Criteria for judging candidates without being told who to choose",
+      "Running a politically neutral sensitization",
+    ],
+    process:
+      "A community or ambassador requests a session → GLAI supplies a nonpartisan brief → facilitators convene citizens to discuss rights and criteria, not named candidates → outcomes are documented without endorsements.",
+    outcomes:
+      "Citizens who can name their rights, test a promise, and choose for themselves. No candidate lists. No party materials. Public sessions belong in the Impact Portfolio when they can be verified.",
+    applyCtaLabel: "Host a civic session",
+    applyHref: "/get-involved/partner",
+    featuredImageUrl: `${SAMPLE}/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1600&q=80`,
+    sortOrder: 6,
+    status: "published" as const,
+  };
+
+  await db
+    .insert(programs)
+    .values(civicEducation)
+    .onConflictDoUpdate({
+      target: programs.slug,
+      set: {
+        name: civicEducation.name,
+        shortDescription: civicEducation.shortDescription,
+        purpose: civicEducation.purpose,
+        whoCanParticipate: civicEducation.whoCanParticipate,
+        curriculum: civicEducation.curriculum,
+        process: civicEducation.process,
+        outcomes: civicEducation.outcomes,
+        applyCtaLabel: civicEducation.applyCtaLabel,
+        applyHref: civicEducation.applyHref,
+        featuredImageUrl: civicEducation.featuredImageUrl,
+        sortOrder: civicEducation.sortOrder,
+        status: civicEducation.status,
+        updatedAt: new Date(),
+      },
+    });
+
+  await db
+    .update(programs)
+    .set({
+      curriculum: [
+        "Foundations of love as a public ethic",
+        "Listening across difference",
+        "Dialogue facilitation",
+        "Community action design",
+        "Safeguarding and code of conduct",
+        "Informed citizenship — rights, records, and nonpartisan choice",
+      ],
+      updatedAt: new Date(),
+    })
+    .where(eq(programs.slug, "love-ambassador-training"));
+
   const programBySlug = Object.fromEntries(
-    (programRows.length
-      ? programRows
-      : await db.select().from(programs)
-    ).map((row) => [row.slug, row]),
+    (await db.select().from(programs)).map((row) => [row.slug, row]),
   );
 
   await db
@@ -409,6 +532,24 @@ async function seed() {
         programId: programBySlug["love-ambassador-training"]?.id,
         status: "published",
         lastUpdated: new Date("2026-01-10"),
+      },
+      {
+        slug: "citizens-briefing-enugu",
+        title: "Citizens’ briefing: how to read a campaign promise",
+        focusArea: "education",
+        location: "Enugu",
+        country: "Nigeria",
+        countryCode: "NG",
+        occurredOn: new Date("2026-02-08"),
+        challenge:
+          "Voters in the community were being asked to choose without a public way to test slogans against a record, and without a room that stayed nonpartisan.",
+        actionsTaken:
+          "Love Ambassadors hosted a Civic Education briefing on rights, empty promises, corruption, and nepotism. Facilitators named criteria, not candidates. No party materials were admitted.",
+        partners: ["Community youth forum"],
+        featuredImageUrl: `${SAMPLE}/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=1600&q=80`,
+        programId: programBySlug["civic-education"]?.id,
+        status: "published",
+        lastUpdated: new Date("2026-03-01"),
       },
     ])
     .onConflictDoNothing({ target: projects.slug });
@@ -542,6 +683,15 @@ Replace this sample with the live 2026 campaign brief.`,
       { title: "Safeguarding and conduct", description: "The code of conduct, consent, and care for the vulnerable.", sortOrder: 5 },
     ])
     .onConflictDoNothing();
+
+  const existingModuleTitles = new Set((await db.select({ title: trainingModules.title }).from(trainingModules)).map((row) => row.title));
+  if (!existingModuleTitles.has("Informed citizenship")) {
+    await db.insert(trainingModules).values({
+      title: "Informed citizenship",
+      description: "Rights, records, and nonpartisan choice — how to judge leadership without being told who to choose.",
+      sortOrder: 6,
+    });
+  }
 
   const modules = await db.select().from(trainingModules);
 
@@ -706,6 +856,14 @@ Replace this sample with the live 2026 campaign brief.`,
         currency: "NGN",
         status: "published",
       },
+      {
+        slug: "sponsor-civic-education",
+        name: "Sponsor Civic Education",
+        description: "Underwrite nonpartisan political sensitizations so citizens can judge a record for themselves.",
+        programId: programBySlug["civic-education"]?.id,
+        currency: "NGN",
+        status: "published",
+      },
     ])
     .onConflictDoNothing({ target: campaigns.slug });
 
@@ -751,6 +909,7 @@ Replace this sample with the live 2026 campaign brief.`,
         title: "Dialogue stewards",
         description: "Help set a room, welcome guests, and support facilitators at Unity Dialogue events.",
         location: "Lagos and rotating cities",
+        slots: 10,
         status: "published",
         publishedAt: new Date(),
       },
@@ -759,6 +918,17 @@ Replace this sample with the live 2026 campaign brief.`,
         title: "Field documentarians",
         description: "Photograph and write, with consent, so the Impact Portfolio can show real work.",
         location: "Assignment-based",
+        slots: 8,
+        status: "published",
+        publishedAt: new Date(),
+      },
+      {
+        slug: "civic-education-stewards",
+        title: "Civic education stewards",
+        description:
+          "Help host politically neutral briefings: welcome guests, keep party materials out of the room, and support facilitators.",
+        location: "Rotating cities",
+        slots: 12,
         status: "published",
         publishedAt: new Date(),
       },
@@ -769,25 +939,35 @@ Replace this sample with the live 2026 campaign brief.`,
     .insert(people)
     .values([
       {
-        name: "Board Chair (placeholder)",
+        name: "Dr. Eniola Biodun",
         position: "Chair, Board of Trustees",
         group: "board",
-        bio: "Replace this seed profile with the verified trustee biography, photograph, and area of responsibility.",
+        bio: "PhD in Public Policy, with 20 years of experience in governance and nonprofit leadership. Dr. Biodun has served on multiple boards and is committed to advancing civic engagement and social responsibility.",
         responsibility: "Governance and fiduciary oversight",
         sortOrder: 1,
         status: "published",
       },
       {
-        name: "Executive Director (placeholder)",
+        name: "Engr. Usman Abubakar",
         position: "Executive Director",
         group: "executive",
-        bio: "Replace this seed profile with the verified executive biography.",
+        bio: "Engr. Usman Abubakar is the Executive Director of GLAI, with over 15 years of experience in project management and organizational development. He is dedicated to driving the organization's mission and ensuring its strategic goals are met.",
         responsibility: "Strategy, programs, and institutional partnerships",
         sortOrder: 1,
         status: "published",
       },
     ])
-    .onConflictDoNothing();
+    .onConflictDoUpdate({
+      target: [people.name, people.position],
+      set: {
+        group: sql`excluded.group`,
+        bio: sql`excluded.bio`,
+        responsibility: sql`excluded.responsibility`,
+        sortOrder: sql`excluded.sort_order`,
+        status: sql`excluded.status`,
+        updatedAt: new Date(),
+      },
+    });
 
   await db
     .insert(impactStats)
@@ -859,6 +1039,30 @@ Replace this sample with the live 2026 campaign brief.`,
       },
     ])
     .onConflictDoNothing();
+
+  const civicFaqs = [
+    {
+      question: "Does GLAI endorse candidates or political parties?",
+      answer:
+        "No. GLAI does not project, fund, or campaign for any candidate or party. Civic education helps citizens recognize fraudulent or incompetent leadership, recognize qualified public-interest leadership, and then make their own informed decisions.",
+      audience: "general",
+      sortOrder: 5,
+      status: "published" as const,
+    },
+    {
+      question: "If GLAI is a humanitarian NGO, why does it talk about politics?",
+      answer:
+        "Because political marginalization, corruption, unhealthy nepotism, and fake campaign promises harm the same communities GLAI serves. The response is politically neutral sensitization — rights, records, and criteria — not a GLAI-endorsed list.",
+      audience: "general",
+      sortOrder: 6,
+      status: "published" as const,
+    },
+  ];
+  const existingFaqQuestions = new Set((await db.select({ question: faqItems.question }).from(faqItems)).map((row) => row.question));
+  const faqsToInsert = civicFaqs.filter((item) => !existingFaqQuestions.has(item.question));
+  if (faqsToInsert.length) {
+    await db.insert(faqItems).values(faqsToInsert);
+  }
 
   const templates: { type: string; subject: string; body: string }[] = [
     {
@@ -955,7 +1159,7 @@ Replace this sample with the live 2026 campaign brief.`,
             kicker: "Global Love Ambassadors Initiative",
             headline: "Humanity Above Differences — Restoring love in a divided world.",
             subheadline:
-              "We are building a global movement of people committed to love, unity, peaceful coexistence, and collective progress.",
+              "We are building a global movement of people committed to love, unity, peaceful coexistence, and collective progress — including the civic courage to refuse corruption, patronage, and empty promises.",
             primaryLabel: "Become a Love Ambassador",
             primaryHref: "/love-ambassadors",
             secondaryLabel: "Support Our Mission",
@@ -974,8 +1178,8 @@ Replace this sample with the live 2026 campaign brief.`,
               { title: "Tribal and ethnic conflict", body: "Identity used as a weapon instead of a heritage." },
               { title: "Political polarization", body: "Public life reduced to camps that cannot share a table." },
               { title: "Hate speech", body: "Language that prepares the ground for violence." },
-              { title: "Social distrust", body: "The quiet collapse of everyday confidence in one another." },
-              { title: "Marginalization", body: "People pushed to the edge of belonging and of care." },
+              { title: "Corruption and nepotism", body: "Public office treated as private property, and loyalty rewarded over competence." },
+              { title: "Political marginalization", body: "Citizens locked out of voice, rights, and the chance to judge a record for themselves." },
             ],
           },
         },
@@ -1063,7 +1267,7 @@ Replace this sample with the live 2026 campaign brief.`,
     {
       slug: "our-work",
       title: "Our Work",
-      description: "Five programs that turn love from a private feeling into public practice.",
+      description: "Programs that turn love from a private feeling into public practice — including nonpartisan civic education.",
       blocks: [
         {
           type: "hero",
@@ -1071,7 +1275,7 @@ Replace this sample with the live 2026 campaign brief.`,
             kicker: "Programs",
             headline: "What we do, in public.",
             subheadline:
-              "Training, dialogue, humanitarian action, cultural campaign, and a shared global day — each program is a doorway into the movement.",
+              "Training, dialogue, humanitarian action, civic education, cultural campaign, and a shared global day — each program is a doorway into the movement.",
             primaryLabel: "Become a Love Ambassador",
             primaryHref: "/love-ambassadors",
             secondaryLabel: "Support a program",
@@ -1080,7 +1284,7 @@ Replace this sample with the live 2026 campaign brief.`,
         },
         {
           type: "card_grid",
-          data: { heading: "Five programs", source: "programs" },
+          data: { heading: "Programs", source: "programs" },
         },
       ],
     },
@@ -1292,8 +1496,8 @@ Replace this sample with the live 2026 campaign brief.`,
             headline: "People who live by love and carry the message globally.",
             subheadline:
               "Love Ambassadors are not a mailing list. They train, they serve, they are counted in a global network, and they appear in the public directory only with consent.",
-            primaryLabel: "Apply now",
-            primaryHref: "/love-ambassadors/apply",
+            primaryLabel: "Sign up",
+            primaryHref: "/signup",
             secondaryLabel: "View the network",
             secondaryHref: "/love-ambassadors/network",
           },
@@ -1309,14 +1513,14 @@ Replace this sample with the live 2026 campaign brief.`,
           type: "rich_text",
           data: {
             heading: "What Ambassadors do",
-            body: "They facilitate dialogue, serve in Love in Action, participate in campaigns such as #SpreadTheLove and Global Love Day, and represent the movement with dignity in their own communities.",
+            body: "They facilitate dialogue, serve in Love in Action, run politically neutral civic education, participate in campaigns such as #SpreadTheLove and Global Love Day, and represent the movement with dignity in their own communities. They do not campaign for candidates.",
           },
         },
         {
           type: "rich_text",
           data: {
             heading: "Principles, training, and recognition",
-            body: "The pathway is Application → Review → Approval → Member Account. Training currently includes five modules. Certificates are issued from the dashboard. A digital membership card is planned as a later enhancement.",
+            body: "Sign up, confirm your WhatsApp number, and your membership dashboard opens immediately. There is no application review in between. From the dashboard you can take volunteer roles, follow active campaigns, and see upcoming events.",
           },
         },
       ],

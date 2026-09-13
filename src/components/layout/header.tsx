@@ -6,6 +6,7 @@ import { getActiveLanguages, getRequestLocale } from "@/lib/locale";
 import { ButtonLink } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
 import { MobileNav } from "@/components/layout/mobile-nav";
+import { splitSiteNav } from "@/lib/nav";
 import { Mail, Phone } from "lucide-react";
 
 export async function Header() {
@@ -15,14 +16,7 @@ export async function Header() {
     getActiveLanguages(),
     getRequestLocale(),
   ]);
-  const nav = settings?.navigation ?? [];
-  const siteNav = nav.some((item) => item.href === "/sponsor-a-project")
-    ? nav
-    : [...nav, { label: "Sponsor a project", href: "/sponsor-a-project" }];
-  const primaryNav = siteNav.filter((item) =>
-    ["/", "/about", "/our-work", "/impact", "/love-ambassadors"].includes(item.href),
-  );
-  const exploreNav = siteNav.filter((item) => !primaryNav.some((primary) => primary.href === item.href));
+  const { primaryNav, exploreNav } = splitSiteNav(settings?.navigation ?? []);
   const ctas = settings?.headerCtas ?? {
     donateLabel: "Donate",
     donateHref: "/donate",
@@ -83,17 +77,13 @@ export async function Header() {
               Sign in
             </ButtonLink>
           )}
-          <ButtonLink href={ctas.joinHref} variant="ghost" size="sm" className="whitespace-nowrap">
-            Join
-          </ButtonLink>
           <ButtonLink href={ctas.donateHref} variant="sunshine" size="sm" className="whitespace-nowrap">
             {ctas.donateLabel}
           </ButtonLink>
         </div>
         <MobileNav
-          items={siteNav}
-          joinHref={ctas.joinHref}
-          joinLabel={ctas.joinLabel}
+          primaryItems={primaryNav}
+          exploreItems={exploreNav}
           donateHref={ctas.donateHref}
           donateLabel={ctas.donateLabel}
           accountHref={user ? (user.roleSlug ? "/admin" : "/dashboard") : "/login"}

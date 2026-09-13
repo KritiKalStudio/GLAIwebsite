@@ -5,6 +5,7 @@ import { EventForm } from "@/components/admin/event-form";
 import { getDb } from "@/db";
 import { eventRegistrations, events } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
+import { listMediaLibrary } from "@/lib/content/media";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -19,17 +20,20 @@ export default async function EditEventPage({
   const db = getDb();
   const [event] = await db.select().from(events).where(eq(events.id, id)).limit(1);
   if (!event) notFound();
-  const attendees = await db
-    .select()
-    .from(eventRegistrations)
-    .where(eq(eventRegistrations.eventId, id))
-    .orderBy(desc(eventRegistrations.createdAt));
+  const [attendees, media] = await Promise.all([
+    db
+      .select()
+      .from(eventRegistrations)
+      .where(eq(eventRegistrations.eventId, id))
+      .orderBy(desc(eventRegistrations.createdAt)),
+    listMediaLibrary(),
+  ]);
 
   return (
     <div className="space-y-10">
       <div>
         <h1 className="font-display text-3xl">Edit event</h1>
-        <EventForm event={event} />
+        <EventForm event={event} media={media} />
       </div>
       <section>
         <h2 className="font-display text-2xl">People who registered</h2>

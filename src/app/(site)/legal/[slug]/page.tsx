@@ -1,15 +1,21 @@
-import { CmsPage } from "@/components/cms-page";
-import { pageMetadata } from "@/lib/page-meta";
+import { notFound } from "next/navigation";
+import type { Metadata } from "next";
+import { LegalBody } from "@/components/blocks/page-sections";
+import { isLegalSlug, legalPages } from "@/lib/content/legal";
 
-export const dynamic = "force-dynamic";
+export function generateStaticParams() {
+  return Object.keys(legalPages).map((slug) => ({ slug }));
+}
 
 export async function generateMetadata({
   params,
 }: {
   params: Promise<{ slug: string }>;
-}) {
+}): Promise<Metadata> {
   const { slug } = await params;
-  return pageMetadata(`legal/${slug}`, slug);
+  if (!isLegalSlug(slug)) return { title: "Legal" };
+  const page = legalPages[slug];
+  return { title: page.title, description: page.description };
 }
 
 export default async function LegalPage({
@@ -18,5 +24,7 @@ export default async function LegalPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  return <CmsPage slug={`legal/${slug}`} />;
+  if (!isLegalSlug(slug)) notFound();
+  const page = legalPages[slug];
+  return <LegalBody heading={page.title} body={page.body} />;
 }

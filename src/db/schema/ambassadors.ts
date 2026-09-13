@@ -12,24 +12,51 @@ import {
 import { ambassadorStatusEnum } from "@/db/schema/enums";
 import { users } from "@/db/schema/users";
 
+export type SignupPayload = {
+  fullName: string;
+  email: string;
+  whatsapp: string;
+  age: number;
+  stateOfOrigin: string;
+  localGovernment: string;
+  currentAddress: string;
+  nationality: string;
+  tribe: string;
+  religion: string;
+  education: string;
+  occupation: string;
+  organization: string;
+};
+
 export const ambassadors = pgTable("ambassadors", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   fullName: text("full_name").notNull(),
   email: text("email").notNull().unique(),
   phone: text("phone"),
+  whatsapp: text("whatsapp"),
+  age: integer("age"),
+  stateOfOrigin: text("state_of_origin"),
+  localGovernment: text("local_government"),
+  currentAddress: text("current_address"),
+  nationality: text("nationality"),
+  tribe: text("tribe"),
+  religion: text("religion"),
+  education: text("education"),
+  occupation: text("occupation"),
+  organization: text("organization"),
   country: text("country").notNull(),
   countryCode: text("country_code").notNull(),
   region: text("region"),
   profession: text("profession"),
   areasOfInterest: jsonb("areas_of_interest").$type<string[]>().notNull().default([]),
-  whyJoin: text("why_join").notNull(),
+  whyJoin: text("why_join").notNull().default(""),
   volunteerInterests: jsonb("volunteer_interests")
     .$type<string[]>()
     .notNull()
     .default([]),
   photoUrl: text("photo_url"),
-  status: ambassadorStatusEnum("status").notNull().default("applied"),
+  status: ambassadorStatusEnum("status").notNull().default("active"),
   consentToDirectory: boolean("consent_to_directory").notNull().default(false),
   principlesAgreedAt: timestamp("principles_agreed_at", {
     withTimezone: true,
@@ -121,3 +148,18 @@ export const certificatesRelations = relations(certificates, ({ one }) => ({
     references: [ambassadors.id],
   }),
 }));
+
+export const signupChallenges = pgTable("signup_challenges", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").notNull(),
+  whatsapp: text("whatsapp").notNull(),
+  codeHash: text("code_hash").notNull(),
+  passwordHash: text("password_hash").notNull(),
+  payload: jsonb("payload").$type<SignupPayload>().notNull(),
+  volunteerRoleSlug: text("volunteer_role_slug"),
+  attempts: integer("attempts").notNull().default(0),
+  expiresAt: timestamp("expires_at", { withTimezone: true, mode: "date" }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+    .notNull()
+    .defaultNow(),
+});

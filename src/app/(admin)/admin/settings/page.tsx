@@ -35,7 +35,7 @@ export default async function AdminSettingsPage() {
         <Field
           label="Languages (JSON)"
           name="languages"
-          hint="Activate a language here, then publish a CMS page with the same locale code. No code deploy is required."
+          hint="Active languages appear in the header switcher. Stories and programs can be stored per language code."
         >
           <TextArea
             id="languages"
@@ -76,6 +76,34 @@ export default async function AdminSettingsPage() {
             defaultValue={JSON.stringify(settings?.contact ?? {}, null, 2)}
           />
         </Field>
+        <fieldset className="grid grid-cols-1 gap-4 rounded-lg border border-brand/10 bg-paper p-5">
+          <legend className="px-1 text-sm font-semibold">Bank transfer details</legend>
+          <p className="text-sm text-muted">Shown on program Donate now forms when a visitor chooses bank transfer.</p>
+          <Field label="Bank name" name="bankName">
+            <TextInput id="bankName" name="bankName" defaultValue={settings?.payment?.bank?.bankName ?? ""} />
+          </Field>
+          <Field label="Account name" name="bankAccountName">
+            <TextInput
+              id="bankAccountName"
+              name="bankAccountName"
+              defaultValue={settings?.payment?.bank?.accountName ?? ""}
+            />
+          </Field>
+          <Field label="Account number" name="bankAccountNumber">
+            <TextInput
+              id="bankAccountNumber"
+              name="bankAccountNumber"
+              defaultValue={settings?.payment?.bank?.accountNumber ?? ""}
+            />
+          </Field>
+          <Field label="Instructions" name="bankInstructions">
+            <TextArea
+              id="bankInstructions"
+              name="bankInstructions"
+              defaultValue={settings?.payment?.bank?.instructions ?? ""}
+            />
+          </Field>
+        </fieldset>
         <Field label="Default search wording (JSON)" name="defaultSeo">
           <TextArea
             id="defaultSeo"
@@ -92,7 +120,9 @@ export default async function AdminSettingsPage() {
             defaultValue={JSON.stringify(settings?.designTokens ?? {}, null, 2)}
           />
         </Field>
-        <Button type="submit">Save settings</Button>
+        <Button type="submit" className="min-h-11 w-full sm:w-auto">
+          Save settings
+        </Button>
       </form>
     </div>
   );

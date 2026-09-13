@@ -4,7 +4,6 @@ import { Kicker, Section } from "@/components/blocks/section";
 import { getCountryCounts, getDirectoryAmbassadors } from "@/lib/content/ambassadors";
 import { getProjectsByCountry } from "@/lib/content/programs";
 
-export const dynamic = "force-dynamic";
 
 export default async function CountryNetworkPage({
   params,

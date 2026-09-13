@@ -4,8 +4,9 @@ import { randomBytes } from "node:crypto";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getDb } from "@/db";
-import { campaigns, donations, recurringDonations, volunteerApplications } from "@/db/schema";
-import { hashToken } from "@/lib/auth";
+import { ambassadors, campaigns, donations, programs, recurringDonations, volunteerApplications } from "@/db/schema";
+import { getSessionUser, hashToken } from "@/lib/auth";
+import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
 import { encryptField } from "@/lib/crypto";
 import { sendTemplatedEmail } from "@/lib/email";
 import { getSiteUrl } from "@/lib/env";
@@ -18,13 +19,14 @@ export async function createSandboxDonation(formData: FormData) {
   const custom = String(formData.get("customAmount") ?? "").trim();
   const currency = String(formData.get("currency") ?? "NGN");
   const frequency = formData.get("frequency") === "monthly" ? "monthly" : "one_time";
-  const donorName = String(formData.get("donorName") ?? "").trim();
-  const donorEmail = String(formData.get("donorEmail") ?? "").trim().toLowerCase();
+  const anonymous = formData.get("anonymous") === "on";
+  const donorName = String(formData.get("donorName") ?? "").trim() || (anonymous ? "Anonymous" : "Supporter");
+  const donorEmail = String(formData.get("donorEmail") ?? "").trim().toLowerCase() || "undisclosed@glai.local";
   const donorPhone = String(formData.get("donorPhone") ?? "").trim();
-  const isAnonymous = formData.get("anonymous") === "on" ? "true" : "false";
+  const isAnonymous = anonymous ? "true" : "false";
 
   const numeric = Number(custom || amount);
-  if (!donorName || !donorEmail || !Number.isFinite(numeric) || numeric <= 0) {
+  if (!Number.isFinite(numeric) || numeric <= 0) {
     redirect("/donate?error=invalid");
   }
 
@@ -95,6 +97,82 @@ export async function createSandboxDonation(formData: FormData) {
   redirect(
     `/donate/receipt/${processorRef}${manageUrl ? `?manage=${encodeURIComponent(manageUrl)}` : ""}`,
   );
+}
+
+const PROCESSORS = new Set(["paystack", "stripe", "gofundme", "patreon", "bank_transfer", "sandbox"]);
+
+export async function createProgramDonation(formData: FormData) {
+  const programSlug = String(formData.get("programSlug") ?? "").trim();
+  const amount = String(formData.get("amount") ?? "").trim();
+  const custom = String(formData.get("customAmount") ?? "").trim();
+  const currency = String(formData.get("currency") ?? "NGN");
+  const processorRaw = String(formData.get("processor") ?? "paystack");
+  const processor = PROCESSORS.has(processorRaw) ? processorRaw : "paystack";
+  const anonymous = formData.get("anonymous") === "on";
+  const numeric = Number(custom || amount);
+  if (!programSlug || !Number.isFinite(numeric) || numeric <= 0) {
+    redirect(`/our-work/${programSlug || ""}?error=invalid`);
+  }
+
+  const user = await getSessionUser();
+  const db = getDb();
+  const [program] = await db.select().from(programs).where(eq(programs.slug, programSlug)).limit(1);
+  if (!program) redirect("/donate");
+
+  const [campaign] = await db.select().from(campaigns).where(eq(campaigns.programId, program.id)).limit(1);
+  const [profile] = user?.ambassadorId
+    ? await db.select().from(ambassadors).where(eq(ambassadors.id, user.ambassadorId)).limit(1)
+    : [];
+
+  let donorName = String(formData.get("donorName") ?? "").trim();
+  let donorEmail = String(formData.get("donorEmail") ?? "").trim().toLowerCase();
+  let donorPhone = String(formData.get("donorPhone") ?? "").trim();
+  let donorOrganization = String(formData.get("donorOrganization") ?? "").trim();
+  const isMember = Boolean(user && !user.roleSlug);
+
+  if (isMember && profile) {
+    if (!anonymous) {
+      donorName = profile.fullName;
+      donorEmail = user!.email;
+      donorPhone = "";
+      donorOrganization = profile.organization ?? "";
+    }
+  }
+
+  if (anonymous) {
+    donorName = donorName || "Anonymous";
+    donorEmail = donorEmail || "anonymous@glai.local";
+  } else {
+    donorName = donorName || "Supporter";
+    donorEmail = donorEmail || "undisclosed@glai.local";
+  }
+
+  const processorRef = `${processor}_${randomBytes(8).toString("hex")}`;
+  const liveGateway = processor === "paystack" || processor === "stripe";
+  await db.insert(donations).values({
+    campaignId: campaign?.id,
+    programId: program.id,
+    userId: isMember ? user!.id : null,
+    amount: String(numeric),
+    currency,
+    frequency: "one_time",
+    donorName,
+    donorEmail,
+    donorPhone: encryptField(donorPhone || null),
+    donorOrganization: donorOrganization || null,
+    isAnonymous: anonymous ? "true" : "false",
+    isMember: isMember && !anonymous ? "true" : "false",
+    processor,
+    processorRef,
+    status: liveGateway ? "pending" : processor === "bank_transfer" ? "pending" : "pending",
+    receiptUrl: `${getSiteUrl()}/donate/receipt/${processorRef}`,
+  });
+
+  revalidateContent(CACHE_TAGS.donations, CACHE_TAGS.programs);
+  revalidatePath("/donate");
+  revalidatePath(`/our-work/${program.slug}`);
+  revalidatePath("/admin/donations");
+  redirect(`/donate/receipt/${processorRef}`);
 }
 
 export async function updateRecurringDonation(formData: FormData) {

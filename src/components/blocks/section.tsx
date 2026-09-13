@@ -10,7 +10,7 @@ export function Section({
   id?: string;
 }) {
   return (
-    <section id={id} data-reveal className={cn("px-4 py-18 lg:px-8 lg:py-28", className)}>
+    <section id={id} className={cn("reveal px-4 py-18 lg:px-8 lg:py-28", className)}>
       <div className="mx-auto max-w-7xl">{children}</div>
     </section>
   );

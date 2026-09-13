@@ -1,9 +1,12 @@
 import { saveProject } from "@/app/actions/admin";
+import { ImagePicker } from "@/components/admin/image-picker";
 import { Button } from "@/components/ui/button";
 import { Field, Select, TextArea, TextInput } from "@/components/ui/field";
+import type { MediaChoice } from "@/lib/content/media";
 
 export function ProjectForm({
   project,
+  media,
 }: {
   project?: {
     id: string;
@@ -18,6 +21,7 @@ export function ProjectForm({
     featuredImageUrl: string | null;
     status: string;
   };
+  media: MediaChoice[];
 }) {
   return (
     <form action={saveProject} className="mt-6 grid max-w-3xl gap-4">
@@ -59,9 +63,7 @@ export function ProjectForm({
           required
         />
       </Field>
-      <Field label="Image URL" name="featuredImageUrl">
-        <TextInput id="featuredImageUrl" name="featuredImageUrl" defaultValue={project?.featuredImageUrl ?? ""} />
-      </Field>
+      <ImagePicker name="featuredImageUrl" label="Picture" defaultValue={project?.featuredImageUrl} assets={media} />
       <Field label="Status" name="status">
         <Select id="status" name="status" defaultValue={project?.status ?? "draft"}>
           <option value="draft">Draft</option>

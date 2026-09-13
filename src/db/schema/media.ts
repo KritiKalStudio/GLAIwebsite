@@ -5,6 +5,7 @@ export const mediaAssets = pgTable("media_assets", {
   id: uuid("id").primaryKey().defaultRandom(),
   key: text("key").notNull().unique(),
   url: text("url").notNull(),
+  thumbnailUrl: text("thumbnail_url"),
   filename: text("filename").notNull(),
   mimeType: text("mime_type").notNull(),
   byteSize: integer("byte_size").notNull().default(0),

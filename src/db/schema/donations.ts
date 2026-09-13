@@ -14,6 +14,7 @@ import {
   recurringStatusEnum,
 } from "@/db/schema/enums";
 import { programs, projects } from "@/db/schema/programs";
+import { users } from "@/db/schema/users";
 
 export const campaigns = pgTable("campaigns", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -29,6 +30,8 @@ export const campaigns = pgTable("campaigns", {
   goalAmount: numeric("goal_amount", { precision: 14, scale: 2 }),
   currency: text("currency").notNull().default("NGN"),
   featuredImageUrl: text("featured_image_url"),
+  startsAt: timestamp("starts_at", { withTimezone: true, mode: "date" }),
+  endsAt: timestamp("ends_at", { withTimezone: true, mode: "date" }),
   status: contentStatusEnum("status").notNull().default("published"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
     .notNull()
@@ -55,13 +58,19 @@ export const donations = pgTable("donations", {
   campaignId: uuid("campaign_id").references(() => campaigns.id, {
     onDelete: "set null",
   }),
+  programId: uuid("program_id").references(() => programs.id, {
+    onDelete: "set null",
+  }),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
   currency: text("currency").notNull().default("NGN"),
   frequency: donationFrequencyEnum("frequency").notNull().default("one_time"),
   donorName: text("donor_name").notNull(),
   donorEmail: text("donor_email").notNull(),
   donorPhone: text("donor_phone"),
+  donorOrganization: text("donor_organization"),
   isAnonymous: text("is_anonymous").notNull().default("false"),
+  isMember: text("is_member").notNull().default("false"),
   receiptUrl: text("receipt_url"),
   processor: text("processor").notNull().default("sandbox"),
   processorRef: text("processor_ref"),

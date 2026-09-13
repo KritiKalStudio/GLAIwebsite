@@ -12,7 +12,7 @@ export function DonateForm({
   campaigns: { slug: string; name: string }[];
 }) {
   return (
-    <form action={createSandboxDonation} className="editorial-card grid max-w-xl gap-7 bg-paper p-5 sm:p-7">
+    <form action={createSandboxDonation} className="editorial-card grid max-w-xl gap-7 bg-paper p-4 sm:p-7">
       <fieldset>
         <legend className="eyebrow">Step 1 · Giving frequency</legend>
         <div className="mt-3 flex flex-wrap gap-2">
@@ -41,8 +41,8 @@ export function DonateForm({
         </Select>
       </Field>
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Your name" name="donorName"><TextInput id="donorName" name="donorName" required /></Field>
-        <Field label="Email" name="donorEmail"><TextInput id="donorEmail" name="donorEmail" type="email" required /></Field>
+        <Field label="Your name (optional)" name="donorName"><TextInput id="donorName" name="donorName" /></Field>
+        <Field label="Email (optional)" name="donorEmail"><TextInput id="donorEmail" name="donorEmail" type="email" /></Field>
       </div>
       <Field label="Phone" name="donorPhone"><TextInput id="donorPhone" name="donorPhone" /></Field>
       <label className="flex items-center gap-2 text-sm">

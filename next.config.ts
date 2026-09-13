@@ -23,11 +23,21 @@ if (process.env.NODE_ENV === "production") {
 }
 
 const nextConfig: NextConfig = {
+  async redirects() {
+    return [
+      {
+        source: "/love-ambassadors/apply",
+        destination: "/signup",
+        permanent: false,
+      },
+    ];
+  },
   images: {
     remotePatterns: [
       { protocol: "https", hostname: mediaHost },
       { protocol: "https", hostname: "images.unsplash.com" },
       { protocol: "https", hostname: "img.youtube.com" },
+      { protocol: "https", hostname: "i.ytimg.com" },
     ],
   },
   async headers() {

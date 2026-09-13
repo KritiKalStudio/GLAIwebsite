@@ -5,7 +5,6 @@ import { getCountryCounts, getDirectoryAmbassadors } from "@/lib/content/ambassa
 import { NetworkMap } from "@/components/network-map";
 import { optionalEnv } from "@/lib/env";
 
-export const dynamic = "force-dynamic";
 
 export const metadata = {
   title: "Global Ambassador Network",

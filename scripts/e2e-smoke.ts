@@ -61,21 +61,38 @@ async function mintSession(email: string) {
   return { sessionId, cookie: `glai_session=${token}` };
 }
 
+async function mintSessionRetry(email: string) {
+  let last: unknown;
+  for (let attempt = 1; attempt <= 5; attempt++) {
+    try {
+      return await mintSession(email);
+    } catch (error) {
+      last = error;
+      const code = (error as { cause?: { code?: string } }).cause?.code;
+      if (code !== "ENOTFOUND" && !String(error).includes("ENOTFOUND")) throw error;
+      await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+    }
+  }
+  throw last;
+}
+
 async function main() {
   const publicPaths = [
     "/",
     "/about",
     "/our-work",
     "/our-work/love-ambassador-training",
+    "/our-work/civic-education",
     "/impact",
     "/get-involved",
     "/get-involved/volunteer",
     "/get-involved/partner",
     "/love-ambassadors",
-    "/love-ambassadors/apply",
+    "/signup",
     "/love-ambassadors/network",
     "/stories",
     "/stories/from-division-to-dialogue",
+    "/podcast",
     "/events",
     "/events/unity-dialogue-september",
     "/donate",
@@ -114,6 +131,43 @@ async function main() {
   expectContains("cookie-accept", home.body, "Accept analytics");
   expectContains("json-ld-ngo", home.body, '"@type":"NGO"');
   expectContains("html-lang-en", home.body, 'lang="en"');
+  expectContains("home civic education", home.body, "Civic education, without a party line");
+  const civic = await request("/our-work/civic-education");
+  expectContains("civic program heading", civic.body, "Civic Education");
+  expectContains("civic nonpartisan", civic.body, "without GLAI projecting");
+  expectContains("program donate now", civic.body, "Donate now");
+  expectContains("program other programs", civic.body, "Other programs");
+  const about = await request("/about");
+  expectContains("about leadership", about.body, "Leadership");
+  const chairCards = about.body.match(/<h3[^>]*>Dr\. Eniola Biodun<\/h3>/g) ?? [];
+  const directorCards = about.body.match(/<h3[^>]*>Engr\. Usman Abubakar<\/h3>/g) ?? [];
+  record(
+    "about leadership not duplicated",
+    chairCards.length === 1 && directorCards.length === 1,
+    `chair=${chairCards.length} director=${directorCards.length}`,
+  );
+  record(
+    "about leadership round photo",
+    /h-20 w-20 shrink-0 (?:rounded-full object-cover|place-items-center rounded-full)/.test(about.body),
+    "round avatar on cards",
+  );
+  const podcast = await request("/podcast");
+  record(
+    "podcast listing",
+    podcast.body.includes("Episodes will appear here") || podcast.body.includes("Open in YouTube"),
+    "empty state or published episode",
+  );
+  const stories = await request("/stories");
+  expectContains("stories news channel copy", stories.body, "Films from the GLAI news channel");
+  const primaryNavHtml = home.body.split('aria-label="Primary"')[1]?.split("</nav>")[0] ?? "";
+  const exploreIdx = primaryNavHtml.indexOf(">Explore");
+  const beforeExplore = exploreIdx >= 0 ? primaryNavHtml.slice(0, exploreIdx) : primaryNavHtml;
+  const afterExplore = exploreIdx >= 0 ? primaryNavHtml.slice(exploreIdx) : "";
+  expectContains("nav podcast primary", beforeExplore, 'href="/podcast"');
+  expectContains("nav stories primary", beforeExplore, 'href="/stories"');
+  record("nav impact not primary", !beforeExplore.includes('href="/impact"'), "Impact is under Explore");
+  expectContains("nav impact explore", afterExplore, 'href="/impact"');
+  expectContains("nav ambassadors explore", afterExplore, 'href="/love-ambassadors"');
   record(
     "header x-content-type-options",
     home.headers.get("x-content-type-options") === "nosniff",
@@ -137,7 +191,8 @@ async function main() {
 
   const french = await request("/?lang=fr");
   expectContains("french html lang", french.body, 'lang="fr"');
-  expectContains("french hero", french.body, "Une page d'accueil en français.");
+  expectContains("french switcher", french.body, "Français");
+  expectContains("french civic heading remains", french.body, "Civic education, without a party line");
   const setCookie = french.headers.get("set-cookie") ?? "";
   record("locale cookie set", setCookie.includes("glai_locale=fr"), setCookie.slice(0, 80));
 
@@ -147,6 +202,8 @@ async function main() {
 
   const sitemap = await request("/sitemap.xml");
   expectContains("sitemap home", sitemap.body, `${BASE}/`);
+  expectContains("sitemap podcast", sitemap.body, `${BASE}/podcast`);
+  expectContains("sitemap signup", sitemap.body, `${BASE}/signup`);
   expectContains("sitemap hreflang fr", sitemap.body, "hreflang=\"fr\"");
 
   const privacy = await request("/legal/privacy");
@@ -158,6 +215,7 @@ async function main() {
 
   const donate = await request("/donate");
   expectContains("donate form", donate.body, "Complete sandbox gift");
+  expectContains("donate sponsor programs", donate.body, "Sponsor a program");
   record(
     "donate no card fields",
     !donate.body.includes('name="cardNumber"') && !donate.body.includes('name="cvv"'),
@@ -165,8 +223,29 @@ async function main() {
   );
 
   const apply = await request("/love-ambassadors/apply");
-  expectContains("apply form", apply.body, 'name="fullName"');
-  expectContains("apply phone", apply.body, 'name="phone"');
+  expectStatus("/love-ambassadors/apply redirect", apply.status, [307, 308, 302]);
+  record(
+    "apply redirects to signup",
+    (apply.location ?? "").includes("/signup"),
+    apply.location ?? "no location",
+  );
+
+  const signup = await request("/signup");
+  expectStatus("/signup", signup.status, [200]);
+  expectContains("signup full name", signup.body, 'name="fullName"');
+  expectContains("signup whatsapp", signup.body, 'name="whatsapp"');
+  expectContains("signup password", signup.body, 'name="password"');
+  expectContains("signup confirm password", signup.body, 'name="confirmPassword"');
+
+  const login = await request("/login");
+  expectContains("login sign up link", login.body, 'href="/signup"');
+  expectContains("login forgot password", login.body, "/forgot-password");
+  record("header has no join cta", !home.body.includes('href="/love-ambassadors/apply"'), "Join apply CTA removed");
+
+  const eventsTab = await request("/stories?category=events");
+  expectStatus("/stories events tab", eventsTab.status, [200]);
+  expectContains("events tab heading", eventsTab.body, "Gatherings published from the Events console");
+  expectContains("events tab published event", eventsTab.body, "Unity Dialogue — Community Listening Session");
 
   const contact = await request("/contact");
   expectContains("privacy topic", contact.body, "Privacy / deletion");
@@ -187,8 +266,8 @@ async function main() {
     dashGate.location ?? "no location",
   );
 
-  const admin = await mintSession("admin@glai.org");
-  const ambassador = await mintSession("ada.okonkwo@example.org");
+  const admin = await mintSessionRetry("admin@glai.org");
+  const ambassador = await mintSessionRetry("ada.okonkwo@example.org");
   const db = getDb();
 
   try {
@@ -208,13 +287,43 @@ async function main() {
 
     const donationsPage = await request("/admin/donations", { cookie: admin.cookie });
     expectStatus("/admin/donations", donationsPage.status, [200]);
+    record("donations no campaign creator", !donationsPage.body.includes("Add a campaign"), "campaigns live on Programs");
+    expectContains("donations manage programs", donationsPage.body, "Manage on Programs");
+
+    const volunteersAdmin = await request("/admin/volunteers", { cookie: admin.cookie });
+    expectStatus("/admin/volunteers", volunteersAdmin.status, [200]);
+    expectContains("volunteer slots field", volunteersAdmin.body, 'name="slots"');
+    record("volunteers no accept gate", !volunteersAdmin.body.includes("Accept"), "roster only");
+
+    const settingsAdmin = await request("/admin/settings", { cookie: admin.cookie });
+    expectStatus("/admin/settings", settingsAdmin.status, [200]);
+    expectContains("bank account number", settingsAdmin.body, 'name="bankAccountNumber"');
+
+    const mediaAdmin = await request("/admin/media", { cookie: admin.cookie });
+    expectStatus("/admin/media", mediaAdmin.status, [200]);
+    expectContains("media upload", mediaAdmin.body, 'type="file"');
+
+    const podcastAdmin = await request("/admin/podcast", { cookie: admin.cookie });
+    expectStatus("/admin/podcast", podcastAdmin.status, [200]);
+    expectContains("podcast admin form", podcastAdmin.body, 'name="youtubeUrl"');
+
+    const leadershipAdmin = await request("/admin/leadership", { cookie: admin.cookie });
+    expectStatus("/admin/leadership", leadershipAdmin.status, [200]);
+    expectContains("leadership photo picker", leadershipAdmin.body, 'name="photoUrl"');
+    expectContains("leadership bio", leadershipAdmin.body, 'name="bio"');
+    expectContains("leadership add", leadershipAdmin.body, "Add a leader");
 
     const membership = await request("/admin/membership", { cookie: admin.cookie });
     expectStatus("/admin/membership", membership.status, [200]);
+    record("membership no review queue", !membership.body.includes("Waiting for review"), "directory only");
+    record("membership no approve copy", !membership.body.includes("Approve application"), "no review actions");
 
     const dash = await request("/dashboard", { cookie: ambassador.cookie });
     expectStatus("/dashboard authenticated", dash.status, [200]);
-    expectContains("dashboard heading", dash.body, "My Ambassador Dashboard");
+    expectContains("dashboard heading", dash.body, "My space");
+    expectContains("dashboard welcome", dash.body, "Welcome,");
+    record("dashboard no training modules", !dash.body.includes("Training modules"), "learning modules removed");
+    record("dashboard no certificates", !dash.body.includes("Certificates"), "certificates removed");
 
     const ambassadorAdmin = await request("/admin", { cookie: ambassador.cookie });
     record(

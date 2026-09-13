@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
 import { getDb } from "@/db";
 import {
   ambassadorTrainingProgress,
@@ -92,6 +93,7 @@ export async function toggleDirectoryConsent(formData: FormData) {
     .update(ambassadors)
     .set({ consentToDirectory: consent, updatedAt: new Date() })
     .where(eq(ambassadors.id, user.ambassadorId));
+  revalidateContent(CACHE_TAGS.ambassadors);
   revalidatePath("/dashboard");
   revalidatePath("/love-ambassadors/network");
 }
@@ -103,10 +105,20 @@ export async function updateAmbassadorProfile(formData: FormData) {
     .update(ambassadors)
     .set({
       fullName: String(formData.get("fullName") ?? user.name),
-      phone: encryptField(String(formData.get("phone") ?? "") || null),
-      region: String(formData.get("region") ?? "") || null,
-      profession: String(formData.get("profession") ?? "") || null,
-      contributions: String(formData.get("contributions") ?? "") || null,
+      phone: encryptField(String(formData.get("whatsapp") ?? formData.get("phone") ?? "") || null),
+      whatsapp: encryptField(String(formData.get("whatsapp") ?? "") || null),
+      age: Number(formData.get("age") || 0) || null,
+      stateOfOrigin: String(formData.get("stateOfOrigin") ?? "") || null,
+      localGovernment: String(formData.get("localGovernment") ?? "") || null,
+      currentAddress: String(formData.get("currentAddress") ?? "") || null,
+      nationality: String(formData.get("nationality") ?? "") || null,
+      tribe: String(formData.get("tribe") ?? "") || null,
+      religion: String(formData.get("religion") ?? "") || null,
+      education: String(formData.get("education") ?? "") || null,
+      occupation: String(formData.get("occupation") ?? "") || null,
+      organization: String(formData.get("organization") ?? "") || null,
+      region: String(formData.get("stateOfOrigin") ?? "") || null,
+      profession: String(formData.get("occupation") ?? "") || null,
       updatedAt: new Date(),
     })
     .where(eq(ambassadors.id, user.ambassadorId));
@@ -196,6 +208,7 @@ export async function approveAmbassador(formData: FormData) {
     entityType: "ambassador",
     entityId: id,
   });
+  revalidateContent(CACHE_TAGS.ambassadors);
   revalidatePath("/admin/membership");
 }
 
@@ -221,6 +234,7 @@ export async function rejectAmbassador(formData: FormData) {
     entityType: "ambassador",
     entityId: id,
   });
+  revalidateContent(CACHE_TAGS.ambassadors);
   revalidatePath("/admin/membership");
 }
 

@@ -5,7 +5,6 @@ import { Card } from "@/components/ui/card";
 import { getPastEvents, getUpcomingEvents } from "@/lib/content/events";
 import { formatDate } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
 export const metadata = {
   title: "Events",
   description: "Upcoming and past GLAI gatherings, dialogues, and Global Love Day hosts.",

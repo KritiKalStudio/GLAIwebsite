@@ -4,7 +4,6 @@ import { ButtonLink } from "@/components/ui/button";
 import { getSponsorTiers } from "@/lib/content/donations";
 import { formatMoney } from "@/lib/format";
 
-export const dynamic = "force-dynamic";
 export const metadata = { title: "Sponsor a Project", description: "Partner with GLAI to sponsor a named program or project." };
 
 export default async function SponsorProjectPage() {

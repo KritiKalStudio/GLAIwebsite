@@ -10,3 +10,4 @@ export * from "@/db/schema/donations";
 export * from "@/db/schema/volunteers";
 export * from "@/db/schema/notifications";
 export * from "@/db/schema/media";
+export * from "@/db/schema/videos";

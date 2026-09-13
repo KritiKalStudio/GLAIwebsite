@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import { cache } from "react";
 import { getDb } from "@/db";
 import { ambassadors, roles, sessions, users } from "@/db/schema";
 import { optionalEnv, requiredEnv } from "@/lib/env";
@@ -74,7 +75,7 @@ export type SessionUser = {
   ambassadorId: string | null;
 };
 
-export async function getSessionUser(): Promise<SessionUser | null> {
+export const getSessionUser = cache(async function getSessionUser(): Promise<SessionUser | null> {
   const jar = await cookies();
   const token = jar.get(COOKIE_NAME)?.value;
   if (!token) return null;
@@ -125,7 +126,7 @@ export async function getSessionUser(): Promise<SessionUser | null> {
   } catch {
     return null;
   }
-}
+});
 
 export function isAdmin(user: SessionUser | null): user is SessionUser {
   if (!user) return false;

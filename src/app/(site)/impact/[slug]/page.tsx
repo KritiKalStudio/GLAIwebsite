@@ -10,7 +10,6 @@ import { getSiteUrl } from "@/lib/env";
 import { formatDate } from "@/lib/format";
 import { articleJsonLd, breadcrumbJsonLd } from "@/lib/structured-data";
 
-export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,

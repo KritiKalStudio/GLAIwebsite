@@ -1,10 +1,22 @@
-import { CmsPage } from "@/components/cms-page";
-import { pageMetadata } from "@/lib/page-meta";
+import { FaqList, PageHero } from "@/components/blocks/page-sections";
+import { getPublishedFaqs } from "@/lib/content/settings";
 
-export const dynamic = "force-dynamic";
-export async function generateMetadata() {
-  return pageMetadata("faq", "FAQ");
-}
+export const metadata = {
+  title: "FAQ",
+  description: "Straight answers for ambassadors, donors, partners, and the press.",
+};
+
 export default async function FaqPage() {
-  return <CmsPage slug="faq" />;
+  const faqs = await getPublishedFaqs();
+
+  return (
+    <>
+      <PageHero
+        kicker="FAQ"
+        headline="Questions we are asked, answered in public."
+        subheadline="Answers are published from the admin dashboard so they can be updated without changing the page layout."
+      />
+      <FaqList faqs={faqs} />
+    </>
+  );
 }

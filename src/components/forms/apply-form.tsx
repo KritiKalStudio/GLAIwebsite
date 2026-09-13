@@ -10,6 +10,7 @@ const interests = [
   "dialogue",
   "youth",
   "education",
+  "civic education",
   "humanitarian action",
   "campaigns",
   "media",
@@ -71,7 +72,7 @@ export function ApplyForm() {
       <fieldset className="space-y-2">
         <legend className="text-sm font-semibold">Volunteer interests</legend>
         <div className="grid gap-2 sm:grid-cols-2">
-          {["facilitation", "logistics", "documentation", "care"].map((interest) => (
+          {["facilitation", "civic education", "logistics", "documentation", "care"].map((interest) => (
             <label key={interest} className="flex items-center gap-2 text-sm">
               <input type="checkbox" name="volunteerInterests" value={interest} />
               {interest}

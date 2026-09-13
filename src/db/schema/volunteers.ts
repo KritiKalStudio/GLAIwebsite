@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  integer,
   jsonb,
   pgTable,
   text,
@@ -7,6 +8,7 @@ import {
   uuid,
 } from "drizzle-orm/pg-core";
 import { contentStatusEnum, volunteerStatusEnum } from "@/db/schema/enums";
+import { users } from "@/db/schema/users";
 
 export const volunteerOpportunities = pgTable("volunteer_opportunities", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -14,6 +16,7 @@ export const volunteerOpportunities = pgTable("volunteer_opportunities", {
   title: text("title").notNull(),
   description: text("description").notNull(),
   location: text("location"),
+  slots: integer("slots").notNull().default(10),
   status: contentStatusEnum("status").notNull().default("published"),
   publishedAt: timestamp("published_at", { withTimezone: true, mode: "date" }),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
@@ -27,13 +30,14 @@ export const volunteerApplications = pgTable("volunteer_applications", {
     () => volunteerOpportunities.id,
     { onDelete: "set null" },
   ),
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
   fullName: text("full_name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
   country: text("country").notNull(),
-  message: text("message").notNull(),
+  message: text("message").notNull().default(""),
   interests: jsonb("interests").$type<string[]>().notNull().default([]),
-  status: volunteerStatusEnum("status").notNull().default("applied"),
+  status: volunteerStatusEnum("status").notNull().default("accepted"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
     .notNull()
     .defaultNow(),

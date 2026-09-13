@@ -11,10 +11,24 @@ export function proxy(request: NextRequest) {
   }
 
   const { pathname } = request.nextUrl;
+  if (pathname === "/love-ambassadors/apply") {
+    const signup = request.nextUrl.clone();
+    signup.pathname = "/signup";
+    return NextResponse.redirect(signup);
+  }
+  const nextParam = request.nextUrl.searchParams.get("next") ?? "";
+  if (pathname === "/login" && nextParam.startsWith("/admin")) {
+    const staffLogin = new URL("/admin/login", request.url);
+    staffLogin.searchParams.set("next", nextParam.startsWith("/admin/login") ? "/admin" : nextParam);
+    return NextResponse.redirect(staffLogin);
+  }
+
   const session = request.cookies.get("glai_session");
-  const gated = pathname.startsWith("/admin") || pathname.startsWith("/dashboard");
+  const isStaffLogin = pathname === "/admin/login";
+  const gated =
+    (pathname.startsWith("/admin") && !isStaffLogin) || pathname.startsWith("/dashboard");
   if (gated && !session) {
-    const login = new URL("/login", request.url);
+    const login = new URL(pathname.startsWith("/admin") ? "/admin/login" : "/login", request.url);
     login.searchParams.set("next", pathname);
     return NextResponse.redirect(login);
   }

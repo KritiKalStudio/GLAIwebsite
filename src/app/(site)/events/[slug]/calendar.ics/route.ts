@@ -1,6 +1,5 @@
 import { getPublishedEvent } from "@/lib/content/events";
 
-export const dynamic = "force-dynamic";
 
 function stamp(date: Date) {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");

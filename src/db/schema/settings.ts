@@ -5,6 +5,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 import { contentStatusEnum, peopleGroupEnum } from "@/db/schema/enums";
@@ -57,6 +58,17 @@ export const siteSettings = pgTable("site_settings", {
       address: string;
     }>()
     .notNull(),
+  payment: jsonb("payment")
+    .$type<{
+      bank?: {
+        bankName: string;
+        accountName: string;
+        accountNumber: string;
+        instructions?: string;
+      };
+    }>()
+    .notNull()
+    .default({}),
   defaultSeo: jsonb("default_seo")
     .$type<{ title: string; description: string }>()
     .notNull(),
@@ -66,23 +78,27 @@ export const siteSettings = pgTable("site_settings", {
     .defaultNow(),
 });
 
-export const people = pgTable("people", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name").notNull(),
-  position: text("position").notNull(),
-  group: peopleGroupEnum("group").notNull(),
-  photoUrl: text("photo_url"),
-  bio: text("bio").notNull(),
-  responsibility: text("responsibility"),
-  sortOrder: integer("sort_order").notNull().default(0),
-  status: contentStatusEnum("status").notNull().default("published"),
-  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
-    .notNull()
-    .defaultNow(),
-});
+export const people = pgTable(
+  "people",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name").notNull(),
+    position: text("position").notNull(),
+    group: peopleGroupEnum("group").notNull(),
+    photoUrl: text("photo_url"),
+    bio: text("bio").notNull(),
+    responsibility: text("responsibility"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    status: contentStatusEnum("status").notNull().default("published"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [unique("people_name_position").on(table.name, table.position)],
+);
 
 export const impactStats = pgTable("impact_stats", {
   id: uuid("id").primaryKey().defaultRandom(),

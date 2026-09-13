@@ -35,8 +35,33 @@ export function patchIpv6Dns() {
       typeof hostname === "string" &&
       hostname.startsWith("db.") &&
       hostname.endsWith(".supabase.co");
+    const isSupabasePooler =
+      typeof hostname === "string" &&
+      hostname.includes("pooler.supabase.com");
 
-    if (!isSupabaseDirect || typeof cb !== "function") {
+    if (typeof cb !== "function") {
+      return original(hostname, options as never, callback as never);
+    }
+
+    if (!isSupabaseDirect && isSupabasePooler) {
+      const maxAttempts = 4;
+      const attempt = (n: number) => {
+        original(hostname, options as never, ((err: NodeJS.ErrnoException | null, ...rest: unknown[]) => {
+          const retryable =
+            err &&
+            (err.code === "ENOTFOUND" || err.code === "EAI_AGAIN" || err.code === "ETIMEOUT" || err.code === "ENODATA");
+          if (retryable && n < maxAttempts) {
+            setTimeout(() => attempt(n + 1), 250 * n);
+            return;
+          }
+          (cb as (...args: unknown[]) => void)(err, ...rest);
+        }) as never);
+      };
+      attempt(1);
+      return;
+    }
+
+    if (!isSupabaseDirect) {
       return original(hostname, options as never, callback as never);
     }
 

@@ -18,12 +18,20 @@ export function LoginForm({ next }: { next: string }) {
       <Field label="Password" name="password">
         <TextInput id="password" name="password" type="password" required autoComplete="current-password" />
       </Field>
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} className="min-h-11 w-full">
         {pending ? "Signing in…" : "Sign in"}
       </Button>
-      <Link href="/forgot-password" className="text-sm text-accent">
-        Forgot password?
-      </Link>
+      <p className="text-sm">
+        <Link href="/forgot-password" className="text-accent">
+          Forgot password?
+        </Link>
+      </p>
+      <p className="text-sm text-muted">
+        New here?{" "}
+        <Link href="/signup" className="font-semibold text-accent">
+          Sign up
+        </Link>
+      </p>
     </form>
   );
 }

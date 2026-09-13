@@ -1,10 +1,13 @@
 import { saveEvent } from "@/app/actions/admin";
+import { ImagePicker } from "@/components/admin/image-picker";
 import { Button } from "@/components/ui/button";
 import { Field, Select, TextArea, TextInput } from "@/components/ui/field";
+import type { MediaChoice } from "@/lib/content/media";
 import { toDatetimeLocal } from "@/lib/format";
 
 export function EventForm({
   event,
+  media,
 }: {
   event?: {
     id: string;
@@ -26,6 +29,7 @@ export function EventForm({
     postEventReport: string | null;
     status: string;
   };
+  media: MediaChoice[];
 }) {
   return (
     <form action={saveEvent} className="mt-6 grid max-w-3xl gap-4">
@@ -95,9 +99,7 @@ export function EventForm({
           <option value="closed">Closed</option>
         </Select>
       </Field>
-      <Field label="Image URL" name="featuredImageUrl">
-        <TextInput id="featuredImageUrl" name="featuredImageUrl" defaultValue={event?.featuredImageUrl ?? ""} />
-      </Field>
+      <ImagePicker name="featuredImageUrl" label="Picture" defaultValue={event?.featuredImageUrl} assets={media} />
       <Field label="YouTube URL" name="youtubeUrl">
         <TextInput id="youtubeUrl" name="youtubeUrl" defaultValue={event?.youtubeUrl ?? ""} />
       </Field>

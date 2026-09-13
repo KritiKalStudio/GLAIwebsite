@@ -27,6 +27,10 @@ export const programs = pgTable("programs", {
   youtubeUrl: text("youtube_url"),
   gallery: jsonb("gallery").$type<string[]>().notNull().default([]),
   sortOrder: integer("sort_order").notNull().default(0),
+  startsAt: timestamp("starts_at", { withTimezone: true, mode: "date" }),
+  endsAt: timestamp("ends_at", { withTimezone: true, mode: "date" }),
+  goalAmount: numeric("goal_amount", { precision: 14, scale: 2 }),
+  currency: text("currency").notNull().default("NGN"),
   status: contentStatusEnum("status").notNull().default("draft"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
     .notNull()
