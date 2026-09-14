@@ -52,8 +52,8 @@ export default async function ReceiptPage({
         </div>
       </dl>
       <p className="mt-4 text-sm text-muted">Print this page or save it as a PDF from your browser.</p>
-      {manage ? (
-        <ButtonLink href={manage} className="mt-6" variant="outline">
+      {manage && /^[a-f0-9]{48}$/i.test(manage) ? (
+        <ButtonLink href={`/donate/manage/${manage}`} className="mt-6" variant="outline">
           Manage monthly gift
         </ButtonLink>
       ) : null}

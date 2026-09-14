@@ -17,8 +17,12 @@ export function DonateForm({
         <legend className="eyebrow">Step 1 · Giving frequency</legend>
         <div className="mt-3 flex flex-wrap gap-2">
           <label className="cursor-pointer rounded-full border border-brand/20 px-4 py-2 text-sm font-semibold has-checked:border-brand has-checked:bg-brand has-checked:text-paper"><input type="radio" name="frequency" value="one_time" className="sr-only" defaultChecked />One-time</label>
-          <label className="cursor-pointer rounded-full border border-brand/20 px-4 py-2 text-sm font-semibold has-checked:border-brand has-checked:bg-brand has-checked:text-paper"><input type="radio" name="frequency" value="monthly" className="sr-only" />Monthly</label>
+          <label className="cursor-pointer rounded-full border border-brand/20 px-4 py-2 text-sm font-semibold has-checked:border-brand has-checked:bg-brand has-checked:text-paper"><input type="radio" name="frequency" value="monthly" className="sr-only" />Monthly pledge</label>
         </div>
+        <p className="mt-3 text-xs leading-relaxed text-muted">
+          Monthly currently records a pledge you can pause or cancel. It does not auto-debit a card until a payment
+          gateway is connected. Use the bank details on this page to send the gift.
+        </p>
       </fieldset>
       <fieldset>
         <legend className="eyebrow">Step 2 · Amount</legend>
@@ -49,7 +53,7 @@ export function DonateForm({
         <input type="checkbox" name="anonymous" />
         List this gift as anonymous
       </label>
-      <Button type="submit">Complete sandbox gift · Get receipt</Button>
+      <Button type="submit">Record this gift · Get receipt</Button>
       <p className="text-xs leading-relaxed text-muted">Your details are used only to process the gift and issue a receipt. Payment card data is never stored by GLAI.</p>
     </form>
   );

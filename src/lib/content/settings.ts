@@ -9,6 +9,9 @@ type SiteSettings = typeof siteSettings.$inferSelect;
 function sanitizeSiteSettings(settings: SiteSettings): SiteSettings {
   return {
     ...settings,
+    payment: {
+      bank: settings.payment?.bank,
+    },
     navigation: rewriteNavHrefs(settings.navigation ?? []),
     headerCtas: {
       ...settings.headerCtas,

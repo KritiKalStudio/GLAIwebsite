@@ -9,8 +9,9 @@ import { getSessionUser, hashToken } from "@/lib/auth";
 import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
 import { encryptField } from "@/lib/crypto";
 import { sendTemplatedEmail } from "@/lib/email";
-import { getSiteUrl } from "@/lib/env";
+import { getRequestSiteUrl } from "@/lib/env";
 import { formatMoney } from "@/lib/format";
+import { getMailSettings, inboxFor } from "@/lib/mail";
 import { revalidatePath } from "next/cache";
 
 export async function createSandboxDonation(formData: FormData) {
@@ -36,6 +37,7 @@ export async function createSandboxDonation(formData: FormData) {
     .where(eq(campaigns.slug, campaignSlug))
     .limit(1);
 
+  const origin = await getRequestSiteUrl();
   const processorRef = `sandbox_${randomBytes(8).toString("hex")}`;
   const [donation] = await getDb()
     .insert(donations)
@@ -51,52 +53,71 @@ export async function createSandboxDonation(formData: FormData) {
       processor: "sandbox",
       processorRef,
       status: "completed",
-      receiptUrl: `${getSiteUrl()}/donate/receipt/${processorRef}`,
+      receiptUrl: `${origin}/donate/receipt/${processorRef}`,
     })
     .returning();
 
-  let manageUrl = "";
+  let manageToken = "";
   if (frequency === "monthly") {
-    const token = randomBytes(24).toString("hex");
+    manageToken = randomBytes(24).toString("hex");
     await getDb().insert(recurringDonations).values({
       donationId: donation.id,
       donorEmail,
-      manageTokenHash: hashToken(token),
+      manageTokenHash: hashToken(manageToken),
       amount: String(numeric),
       currency,
       status: "active",
       nextChargeAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 30),
       processorRef,
     });
-    manageUrl = `${getSiteUrl()}/donate/manage/${token}`;
   }
 
-  await sendTemplatedEmail({
-    type: "donation_confirmation",
-    to: donorEmail,
-    vars: {
-      name: donorName,
-      amount: formatMoney(numeric, currency),
-      currency,
-      frequency,
-      receiptUrl: donation.receiptUrl ?? "",
-    },
-  });
-  await sendTemplatedEmail({
-    type: "donation_receipt",
-    to: donorEmail,
-    vars: {
-      name: donorName,
-      amount: formatMoney(numeric, currency),
-      currency,
-      receiptId: processorRef,
-      receiptUrl: donation.receiptUrl ?? "",
-    },
-  });
+  const receiptUrl = donation.receiptUrl ?? `${origin}/donate/receipt/${processorRef}`;
+  try {
+    await sendTemplatedEmail({
+      type: "donation_confirmation",
+      to: donorEmail,
+      role: "donationsFrom",
+      vars: {
+        name: donorName,
+        amount: formatMoney(numeric, currency),
+        currency,
+        frequency,
+        receiptUrl,
+      },
+    });
+    await sendTemplatedEmail({
+      type: "donation_receipt",
+      to: donorEmail,
+      role: "donationsFrom",
+      vars: {
+        name: donorName,
+        amount: formatMoney(numeric, currency),
+        currency,
+        receiptId: processorRef,
+        receiptUrl,
+      },
+    });
+    const notify = inboxFor(await getMailSettings(), "donationsNotifyTo");
+    if (notify) {
+      await sendTemplatedEmail({
+        type: "donation_confirmation",
+        to: notify,
+        role: "donationsFrom",
+        vars: {
+          name: donorName,
+          amount: formatMoney(numeric, currency),
+          currency,
+          frequency,
+          receiptUrl,
+        },
+      });
+    }
+  } catch {
+    // Gift is recorded even if mail delivery is not configured yet.
+  }
 
-  redirect(
-    `/donate/receipt/${processorRef}${manageUrl ? `?manage=${encodeURIComponent(manageUrl)}` : ""}`,
-  );
+  redirect(`/donate/receipt/${processorRef}${manageToken ? `?manage=${manageToken}` : ""}`);
 }
 
 const PROCESSORS = new Set(["paystack", "stripe", "gofundme", "patreon", "bank_transfer", "sandbox"]);
@@ -165,7 +186,7 @@ export async function createProgramDonation(formData: FormData) {
     processor,
     processorRef,
     status: liveGateway ? "pending" : processor === "bank_transfer" ? "pending" : "pending",
-    receiptUrl: `${getSiteUrl()}/donate/receipt/${processorRef}`,
+    receiptUrl: `${await getRequestSiteUrl()}/donate/receipt/${processorRef}`,
   });
 
   revalidateContent(CACHE_TAGS.donations, CACHE_TAGS.programs);
@@ -219,8 +240,22 @@ export async function applyVolunteer(
   await sendTemplatedEmail({
     type: "volunteer_received",
     to: email,
+    role: "volunteersFrom",
     vars: { name: fullName },
   });
+  const notify = inboxFor(await getMailSettings(), "volunteersNotifyTo");
+  if (notify) {
+    try {
+      await sendTemplatedEmail({
+        type: "volunteer_received",
+        to: notify,
+        role: "volunteersFrom",
+        vars: { name: fullName },
+      });
+    } catch {
+      // Application is stored even if staff notification fails.
+    }
+  }
   revalidatePath("/admin/volunteers");
   return { ok: true };
 }

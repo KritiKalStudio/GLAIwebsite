@@ -30,6 +30,10 @@ export default async function ManageDonationPage({
       <p className="mt-3 text-muted">
         {formatMoney(row.amount, row.currency)} · status: {row.status}
       </p>
+      <p className="mt-4 text-sm leading-relaxed text-muted">
+        This is a recorded monthly pledge. It does not charge a card until a payment gateway is connected. Pause or
+        cancel here so the team stops counting it as an expected gift.
+      </p>
       <form action={updateRecurringDonation} className="mt-8 flex flex-wrap gap-2">
         <input type="hidden" name="token" value={token} />
         <Button name="status" value="paused" variant="outline">

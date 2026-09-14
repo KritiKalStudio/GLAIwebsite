@@ -1,8 +1,10 @@
 import Link from "next/link";
 import { DonateForm } from "@/components/forms/donate-form";
+import { BankDetailsCard } from "@/components/forms/bank-details-card";
 import { Kicker, Section } from "@/components/blocks/section";
 import { getPublishedCampaigns } from "@/lib/content/donations";
 import { getActiveProgramsWithRaised } from "@/lib/content/programs";
+import { getSiteSettings } from "@/lib/content/settings";
 import { formatMoney } from "@/lib/format";
 
 export const metadata = {
@@ -16,7 +18,11 @@ export default async function DonatePage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const { error } = await searchParams;
-  const [campaigns, programs] = await Promise.all([getPublishedCampaigns(), getActiveProgramsWithRaised()]);
+  const [campaigns, programs, settings] = await Promise.all([
+    getPublishedCampaigns(),
+    getActiveProgramsWithRaised(),
+    getSiteSettings(),
+  ]);
 
   return (
     <>
@@ -24,7 +30,8 @@ export default async function DonatePage({
         <Kicker>Give</Kicker>
         <h1 className="mt-3 font-display text-4xl">Support the mission</h1>
         <p className="mt-4 max-w-2xl text-paper/85">
-          You do not need an account to give. Payment gateways will connect later; gifts are recorded and receipted.
+          Card and mobile-money gateways are not connected yet. Use the account details below for a bank transfer, or
+          record a gift here so we can send a receipt.
         </p>
       </Section>
       <Section>
@@ -36,11 +43,14 @@ export default async function DonatePage({
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(17rem,.65fr)] lg:items-start">
           <DonateForm campaigns={campaigns} />
           <aside className="space-y-5 lg:sticky lg:top-32">
-            <div className="editorial-card bg-mist p-6">
-              <p className="eyebrow">Why recurring gifts matter</p>
-              <h2 className="mt-3 font-display text-2xl text-brand">Keep the work moving between the headlines.</h2>
+            <BankDetailsCard bank={settings?.payment?.bank} />
+            <div className="editorial-card bg-paper p-6">
+              <p className="eyebrow">Monthly gifts</p>
+              <h2 className="mt-3 font-display text-2xl text-brand">A recorded pledge, not an auto-debit yet.</h2>
               <p className="mt-3 text-sm leading-relaxed text-muted">
-                Monthly support gives GLAI room to plan, respond, and stay present with communities over time.
+                Choosing monthly saves your intention and gives you a link to pause or cancel it. Until Paystack or
+                Stripe is connected, GLAI cannot charge a card each month. Repeat the bank transfer above, or wait for
+                gated billing.
               </p>
             </div>
           </aside>

@@ -16,8 +16,11 @@ import {
 import { COUNTRIES } from "@/lib/countries";
 import { encryptField } from "@/lib/crypto";
 import { authenticateWithPassword, safeAdminPath } from "@/lib/primary-admin";
-import { sendTemplatedEmail } from "@/lib/email";
-import { getSiteUrl } from "@/lib/env";
+import { sendSignupCodeEmail, sendTemplatedEmail } from "@/lib/email";
+import { getRequestSiteUrl } from "@/lib/env";
+import { getMailSettings, inboxFor } from "@/lib/mail";
+import { isNigeriaPlace, lgasForState, NOT_APPLICABLE } from "@/lib/nigeria-locations";
+import { RELIGION_OPTIONS, resolveReligion } from "@/lib/religions";
 import { assignVolunteerRole } from "@/lib/volunteer-slots";
 import { normalizeWhatsapp, sendWhatsappCode } from "@/lib/whatsapp";
 import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
@@ -93,11 +96,12 @@ export async function requestPasswordReset(formData: FormData): Promise<void> {
       expiresAt: new Date(Date.now() + 1000 * 60 * 60),
     });
     await sendTemplatedEmail({
-      type: "application_approved",
+      type: "password_reset",
       to: user.email,
+      role: "passwordResetFrom",
       vars: {
         name: user.name,
-        resetUrl: `${getSiteUrl()}/reset-password?token=${token}`,
+        resetUrl: `${await getRequestSiteUrl()}/reset-password?token=${token}`,
       },
     });
   }
@@ -139,31 +143,35 @@ function field(formData: FormData, key: string) {
   return String(formData.get(key) ?? "").trim();
 }
 
-function countryFromNationality(nationality: string) {
+function countryFromValue(value: string) {
   const match = COUNTRIES.find(
-    (row) => row.name.toLowerCase() === nationality.toLowerCase() || row.code.toLowerCase() === nationality.toLowerCase(),
+    (row) => row.name.toLowerCase() === value.toLowerCase() || row.code.toLowerCase() === value.toLowerCase(),
   );
-  return { country: match?.name ?? nationality, countryCode: match?.code ?? "ZZ" };
+  return { country: match?.name ?? value, countryCode: match?.code ?? "ZZ" };
 }
 
 export async function startSignupAction(
   _prev: { error?: string } | null,
   formData: FormData,
 ): Promise<{ error?: string }> {
+  const otpChannel = field(formData, "otpChannel") === "email" ? "email" : "whatsapp";
+  const religion = resolveReligion(field(formData, "religion"), field(formData, "religionOther"));
   const payload: SignupPayload = {
     fullName: field(formData, "fullName"),
     email: field(formData, "email").toLowerCase(),
     whatsapp: field(formData, "whatsapp"),
     age: Number(field(formData, "age")),
+    country: field(formData, "country"),
     stateOfOrigin: field(formData, "stateOfOrigin"),
     localGovernment: field(formData, "localGovernment"),
     currentAddress: field(formData, "currentAddress"),
     nationality: field(formData, "nationality"),
     tribe: field(formData, "tribe"),
-    religion: field(formData, "religion"),
+    religion,
     education: field(formData, "education"),
     occupation: field(formData, "occupation"),
     organization: field(formData, "organization"),
+    otpChannel,
   };
   const password = String(formData.get("password") ?? "");
   const confirm = String(formData.get("confirmPassword") ?? "");
@@ -171,12 +179,26 @@ export async function startSignupAction(
 
   const missing = Object.entries(payload).filter(([key, value]) => {
     if (key === "age") return !Number.isFinite(payload.age) || payload.age < 13 || payload.age > 120;
+    if (key === "otpChannel") return false;
     return !String(value).trim();
   });
   if (missing.length) {
     return { error: "Please complete every field on the form." };
   }
   if (!payload.email.includes("@")) return { error: "Enter a valid email address." };
+  if (field(formData, "religion") === "Other" && !field(formData, "religionOther")) {
+    return { error: "Please specify your religion, or choose one of the listed options." };
+  }
+  if (field(formData, "religion") && field(formData, "religion") !== "Other" && !(RELIGION_OPTIONS as readonly string[]).includes(field(formData, "religion"))) {
+    return { error: "Choose a religion from the list." };
+  }
+  const allowedLgas = lgasForState(payload.stateOfOrigin);
+  if (!payload.stateOfOrigin || (payload.stateOfOrigin !== NOT_APPLICABLE && !allowedLgas.includes(payload.localGovernment))) {
+    return { error: "Choose a valid state of origin and local government." };
+  }
+  if (isNigeriaPlace(payload.nationality) && payload.stateOfOrigin === NOT_APPLICABLE) {
+    return { error: "Nigerian members should select a state of origin." };
+  }
   const whatsapp = normalizeWhatsapp(payload.whatsapp);
   if (!whatsapp) return { error: "Enter a valid WhatsApp number with country code, e.g. +2348012345678." };
   payload.whatsapp = whatsapp;
@@ -213,13 +235,22 @@ export async function startSignupAction(
 
   let hint = "";
   try {
-    const result = await sendWhatsappCode(whatsapp, code);
-    if (result.skipped) hint = code;
+    if (otpChannel === "email") {
+      const result = await sendSignupCodeEmail(payload.email, code, payload.fullName);
+      if (result.sandbox) hint = code;
+    } else {
+      const result = await sendWhatsappCode(whatsapp, code);
+      if (result.skipped) hint = code;
+    }
   } catch (error) {
-    return { error: error instanceof Error ? error.message : "Could not send the WhatsApp code. Check the number and try again." };
+    const fallback =
+      otpChannel === "email"
+        ? "Could not send the email code. Check the address and try again, or choose WhatsApp."
+        : "Could not send the WhatsApp code. Check the number and try again, or choose email.";
+    return { error: error instanceof Error ? error.message : fallback };
   }
 
-  const confirmUrl = new URL("/signup/confirm", getSiteUrl());
+  const confirmUrl = new URL("/signup/confirm", "http://placeholder.local");
   confirmUrl.searchParams.set("id", challenge.id);
   if (hint) confirmUrl.searchParams.set("dev", hint);
   redirect(`${confirmUrl.pathname}${confirmUrl.search}`);
@@ -231,7 +262,7 @@ export async function confirmSignupAction(
 ): Promise<{ error?: string }> {
   const id = field(formData, "id");
   const code = field(formData, "code").replace(/\D/g, "");
-  if (!id || code.length !== 4) return { error: "Enter the 4-digit code sent to WhatsApp." };
+  if (!id || code.length !== 4) return { error: "Enter the 4-digit code we sent." };
 
   const db = getDb();
   const [challenge] = await db.select().from(signupChallenges).where(eq(signupChallenges.id, id)).limit(1);
@@ -244,11 +275,11 @@ export async function confirmSignupAction(
       .update(signupChallenges)
       .set({ attempts: challenge.attempts + 1 })
       .where(eq(signupChallenges.id, id));
-    return { error: "That code did not match. Check WhatsApp and try again." };
+    return { error: "That code did not match. Check the message and try again." };
   }
 
   const payload = challenge.payload;
-  const { country, countryCode } = countryFromNationality(payload.nationality);
+  const { country, countryCode } = countryFromValue(payload.country || payload.nationality);
   const [created] = await db
     .insert(users)
     .values({
@@ -308,6 +339,20 @@ export async function confirmSignupAction(
         .slice(0, 4)
         .map((role) => role.slug)
         .join(",");
+    }
+  }
+
+  const membershipInbox = inboxFor(await getMailSettings(), "membershipNotifyTo");
+  if (membershipInbox) {
+    try {
+      await sendTemplatedEmail({
+        type: "application_received",
+        to: membershipInbox,
+        role: "membershipFrom",
+        vars: { name: payload.fullName },
+      });
+    } catch {
+      // Membership is already created; inbox notification must not block sign-in.
     }
   }
 

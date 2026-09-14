@@ -15,7 +15,8 @@ import { getSessionUser, hashPassword } from "@/lib/auth";
 import { encryptField } from "@/lib/crypto";
 import { COUNTRIES } from "@/lib/countries";
 import { sendTemplatedEmail } from "@/lib/email";
-import { getSiteUrl } from "@/lib/env";
+import { getRequestSiteUrl } from "@/lib/env";
+import { resolveReligion } from "@/lib/religions";
 import { randomBytes } from "node:crypto";
 import { users } from "@/db/schema";
 
@@ -101,6 +102,11 @@ export async function toggleDirectoryConsent(formData: FormData) {
 export async function updateAmbassadorProfile(formData: FormData) {
   const user = await getSessionUser();
   if (!user?.ambassadorId) return;
+  const countryName = String(formData.get("country") ?? "").trim();
+  const countryMatch = COUNTRIES.find(
+    (row) => row.name.toLowerCase() === countryName.toLowerCase() || row.code.toLowerCase() === countryName.toLowerCase(),
+  );
+  const religion = resolveReligion(String(formData.get("religion") ?? ""), String(formData.get("religionOther") ?? ""));
   await getDb()
     .update(ambassadors)
     .set({
@@ -113,10 +119,16 @@ export async function updateAmbassadorProfile(formData: FormData) {
       currentAddress: String(formData.get("currentAddress") ?? "") || null,
       nationality: String(formData.get("nationality") ?? "") || null,
       tribe: String(formData.get("tribe") ?? "") || null,
-      religion: String(formData.get("religion") ?? "") || null,
+      religion: religion || null,
       education: String(formData.get("education") ?? "") || null,
       occupation: String(formData.get("occupation") ?? "") || null,
       organization: String(formData.get("organization") ?? "") || null,
+      ...(countryName
+        ? {
+            country: countryMatch?.name || countryName,
+            countryCode: countryMatch?.code ?? "ZZ",
+          }
+        : {}),
       region: String(formData.get("stateOfOrigin") ?? "") || null,
       profession: String(formData.get("occupation") ?? "") || null,
       updatedAt: new Date(),
@@ -194,7 +206,7 @@ export async function approveAmbassador(formData: FormData) {
     to: ambassador.email,
     vars: {
       name: ambassador.fullName,
-      resetUrl: `${getSiteUrl()}/reset-password?token=${token}`,
+      resetUrl: `${await getRequestSiteUrl()}/reset-password?token=${token}`,
     },
   });
   await sendTemplatedEmail({

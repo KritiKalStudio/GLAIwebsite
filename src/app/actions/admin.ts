@@ -36,6 +36,7 @@ import { recordAudit } from "@/lib/audit";
 import { getSessionUser, hashPassword, hasPermission, isAdmin, isPrimaryAdmin } from "@/lib/auth";
 import { putObject } from "@/lib/r2";
 import { sendTemplatedEmail } from "@/lib/email";
+import { mergeMailSettings, persistResendApiKey, persistSmtpPassword } from "@/lib/mail";
 import { sanitizeRichText } from "@/lib/rich-text";
 import { rewriteLegacyApplyHref, rewriteNavHrefs } from "@/lib/nav";
 import { fetchYoutubeOEmbed, youtubeIdFromUrl, youtubeThumbnailUrl, youtubeWatchUrl } from "@/lib/youtube";
@@ -355,6 +356,40 @@ export async function saveSettings(formData: FormData) {
     newsletterPlaceholder?: string;
     copyright?: string;
   };
+  const [existing] = await getDb()
+    .select({ payment: siteSettings.payment })
+    .from(siteSettings)
+    .where(eq(siteSettings.id, "default"))
+    .limit(1);
+  const previousMail = mergeMailSettings(existing?.payment?.mail);
+  const mail = mergeMailSettings({
+    provider: str(formData, "mailProvider") === "resend" ? "resend" : "google_smtp",
+    googleSmtp: {
+      host: str(formData, "smtpHost") || "smtp.gmail.com",
+      port: Number(str(formData, "smtpPort")) || 465,
+      user: str(formData, "smtpUser"),
+      fromName: str(formData, "smtpFromName") || "GLAI",
+      fromEmail: str(formData, "smtpFromEmail"),
+      passwordEncrypted: persistSmtpPassword(str(formData, "smtpPassword"), previousMail.googleSmtp.passwordEncrypted),
+    },
+    resend: {
+      fromName: str(formData, "resendFromName") || "GLAI",
+      fromEmail: str(formData, "resendFromEmail"),
+      apiKeyEncrypted: persistResendApiKey(str(formData, "resendApiKey"), previousMail.resend.apiKeyEncrypted),
+    },
+    roles: {
+      membershipFrom: str(formData, "mailMembershipFrom"),
+      passwordResetFrom: str(formData, "mailPasswordResetFrom"),
+      donationsFrom: str(formData, "mailDonationsFrom"),
+      eventsFrom: str(formData, "mailEventsFrom"),
+      volunteersFrom: str(formData, "mailVolunteersFrom"),
+      newsletterFrom: str(formData, "mailNewsletterFrom"),
+      contactTo: str(formData, "mailContactTo"),
+      donationsNotifyTo: str(formData, "mailDonationsNotifyTo"),
+      membershipNotifyTo: str(formData, "mailMembershipNotifyTo"),
+      volunteersNotifyTo: str(formData, "mailVolunteersNotifyTo"),
+    },
+  });
   await getDb()
     .update(siteSettings)
     .set({
@@ -395,6 +430,7 @@ export async function saveSettings(formData: FormData) {
           accountNumber: str(formData, "bankAccountNumber"),
           instructions: str(formData, "bankInstructions"),
         },
+        mail,
       },
       updatedAt: new Date(),
     })
@@ -402,6 +438,7 @@ export async function saveSettings(formData: FormData) {
   await recordAudit({ actorId: user.id, action: "settings.update", entityType: "settings", entityId: "default" });
   revalidateContent(CACHE_TAGS.settings);
   revalidatePath("/");
+  revalidatePath("/donate");
   revalidatePath("/admin/settings");
 }
 

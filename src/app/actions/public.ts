@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import { contactMessages, newsletterSubscribers } from "@/db/schema";
 import { sendTemplatedEmail } from "@/lib/email";
+import { getMailSettings, inboxFor } from "@/lib/mail";
 
 export async function subscribeNewsletter(formData: FormData) {
   const email = String(formData.get("email") ?? "")
@@ -25,6 +26,20 @@ export async function submitContact(formData: FormData): Promise<{ ok: boolean; 
     return { ok: false, error: "Please include your name, email, and message." };
   }
   await getDb().insert(contactMessages).values({ name, email, topic, body });
+  const inbox = inboxFor(await getMailSettings(), "contactTo");
+  if (inbox) {
+    try {
+      await sendTemplatedEmail({
+        type: "contact_message",
+        to: inbox,
+        role: "membershipFrom",
+        replyTo: email,
+        vars: { name, email, topic, body },
+      });
+    } catch {
+      // The message is stored for staff even if email delivery fails.
+    }
+  }
   revalidatePath("/admin/messages");
   return { ok: true };
 }

@@ -4,6 +4,7 @@ import { toggleDirectoryConsent, updateAmbassadorProfile } from "@/app/actions/a
 import { logoutAction } from "@/app/actions/auth";
 import { toggleVolunteerRole } from "@/app/actions/volunteers";
 import { Button } from "@/components/ui/button";
+import { MembershipPlaceFields } from "@/components/forms/membership-place-fields";
 import { Field, TextArea, TextInput } from "@/components/ui/field";
 import { Badge, Card } from "@/components/ui/card";
 import { Section } from "@/components/blocks/section";
@@ -102,20 +103,19 @@ export default async function DashboardPage({
           <Field label="Age" name="age">
             <TextInput id="age" name="age" type="number" defaultValue={profile.age ?? ""} />
           </Field>
-          <Field label="State of origin" name="stateOfOrigin">
-            <TextInput id="stateOfOrigin" name="stateOfOrigin" defaultValue={profile.stateOfOrigin ?? ""} />
-          </Field>
-          <Field label="Local government" name="localGovernment">
-            <TextInput id="localGovernment" name="localGovernment" defaultValue={profile.localGovernment ?? ""} />
-          </Field>
-          <Field label="Nationality" name="nationality">
-            <TextInput id="nationality" name="nationality" defaultValue={profile.nationality ?? profile.country} />
-          </Field>
+          <div className="sm:col-span-2 grid gap-4">
+            <MembershipPlaceFields
+              defaults={{
+                nationality: profile.nationality ?? profile.country,
+                country: profile.country,
+                stateOfOrigin: profile.stateOfOrigin ?? "",
+                localGovernment: profile.localGovernment ?? "",
+                religion: profile.religion ?? "",
+              }}
+            />
+          </div>
           <Field label="Tribe" name="tribe">
             <TextInput id="tribe" name="tribe" defaultValue={profile.tribe ?? ""} />
-          </Field>
-          <Field label="Religion" name="religion">
-            <TextInput id="religion" name="religion" defaultValue={profile.religion ?? ""} />
           </Field>
           <Field label="Education" name="education">
             <TextInput id="education" name="education" defaultValue={profile.education ?? ""} />

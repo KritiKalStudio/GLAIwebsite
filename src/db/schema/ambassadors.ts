@@ -17,6 +17,7 @@ export type SignupPayload = {
   email: string;
   whatsapp: string;
   age: number;
+  country: string;
   stateOfOrigin: string;
   localGovernment: string;
   currentAddress: string;
@@ -26,6 +27,7 @@ export type SignupPayload = {
   education: string;
   occupation: string;
   organization: string;
+  otpChannel: "whatsapp" | "email";
 };
 
 export const ambassadors = pgTable("ambassadors", {

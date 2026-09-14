@@ -23,6 +23,35 @@ export type LanguageOption = {
   isActive?: boolean;
 };
 
+export type MailSettings = {
+  provider: "resend" | "google_smtp";
+  googleSmtp: {
+    host: string;
+    port: number;
+    user: string;
+    fromName: string;
+    fromEmail: string;
+    passwordEncrypted?: string;
+  };
+  resend: {
+    fromName: string;
+    fromEmail: string;
+    apiKeyEncrypted?: string;
+  };
+  roles: {
+    membershipFrom: string;
+    passwordResetFrom: string;
+    donationsFrom: string;
+    eventsFrom: string;
+    volunteersFrom: string;
+    newsletterFrom: string;
+    contactTo: string;
+    donationsNotifyTo: string;
+    membershipNotifyTo: string;
+    volunteersNotifyTo: string;
+  };
+};
+
 export const siteSettings = pgTable("site_settings", {
   id: text("id").primaryKey().default("default"),
   orgName: text("org_name").notNull(),
@@ -66,6 +95,7 @@ export const siteSettings = pgTable("site_settings", {
         accountNumber: string;
         instructions?: string;
       };
+      mail?: MailSettings;
     }>()
     .notNull()
     .default({}),
