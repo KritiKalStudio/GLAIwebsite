@@ -78,7 +78,7 @@ export default async function AdminVolunteersPage() {
                     <option value="archived">Archived</option>
                   </Select>
                 </Field>
-                <Button type="submit" className="min-h-11 w-full sm:w-auto">
+                <Button type="submit" className="w-full sm:w-auto">
                   Save role
                 </Button>
               </form>
@@ -109,7 +109,7 @@ export default async function AdminVolunteersPage() {
               <option value="archived">Archived</option>
             </Select>
           </Field>
-          <Button type="submit" className="min-h-11 w-full sm:w-auto">
+          <Button type="submit" className="w-full sm:w-auto">
             Publish role
           </Button>
         </form>

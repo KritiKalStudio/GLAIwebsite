@@ -64,7 +64,7 @@ export default async function EventPage({
       />
       <Section className="bg-mist">
         <Kicker>Event</Kicker>
-        <h1 className="mt-3 font-display text-4xl">{event.title}</h1>
+        <h1 className="mt-3 font-display text-2xl sm:text-4xl">{event.title}</h1>
         <p className="mt-3 text-muted">
           {formatDate(event.startsAt, "d MMMM yyyy, HH:mm")} {event.timezone}
         </p>
@@ -81,7 +81,7 @@ export default async function EventPage({
         src={event.featuredImageUrl}
         youtubeUrl={event.youtubeUrl}
         alt={event.title}
-        className="relative mx-auto aspect-[21/9] max-w-6xl overflow-hidden bg-mist"
+        className="relative mx-auto aspect-[16/9] max-w-6xl overflow-hidden bg-mist lg:aspect-[21/9]"
       />
       <Section className="grid gap-10 lg:grid-cols-3">
         <article className="lg:col-span-2">

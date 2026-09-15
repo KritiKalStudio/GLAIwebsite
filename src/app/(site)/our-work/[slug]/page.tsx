@@ -93,10 +93,10 @@ export default async function ProgramPage({
       />
       <Section className="bg-brand text-paper">
         <Kicker>Our Work</Kicker>
-        <h1 className="mt-3 max-w-3xl font-display text-4xl sm:text-5xl">{program.name}</h1>
-        <p className="mt-4 max-w-2xl text-lg text-paper/85">{program.shortDescription}</p>
+        <h1 className="mt-3 max-w-3xl font-display text-2xl sm:text-5xl">{program.name}</h1>
+        <p className="mt-3 max-w-2xl text-sm text-paper/85 sm:mt-4 sm:text-lg">{program.shortDescription}</p>
         {program.applyHref ? (
-          <ButtonLink href={program.applyHref} variant="sunshine" className="mt-8">
+          <ButtonLink href={program.applyHref} variant="sunshine" className="mt-5 sm:mt-8">
             {program.applyCtaLabel ?? "Take part"}
           </ButtonLink>
         ) : null}
@@ -105,7 +105,7 @@ export default async function ProgramPage({
         src={program.featuredImageUrl}
         youtubeUrl={program.youtubeUrl}
         alt={program.name}
-        className="relative mx-auto mt-0 aspect-[21/9] max-w-6xl overflow-hidden bg-mist lg:rounded-b-lg"
+        className="relative mx-auto mt-0 aspect-[16/9] max-w-6xl overflow-hidden bg-mist lg:aspect-[21/9] lg:rounded-b-lg"
       />
       <Section>
         <div className="grid gap-10 lg:grid-cols-3">
@@ -142,7 +142,7 @@ export default async function ProgramPage({
                 <p className="mt-2 leading-relaxed text-muted">{program.outcomes}</p>
               </div>
             ) : null}
-            <div id="sponsor" className="rounded-2xl border border-brand/10 bg-mist p-5 sm:p-7">
+            <div id="sponsor" className="rounded-lg border border-brand/10 bg-mist p-4 sm:rounded-2xl sm:p-7">
               <p className="text-xs font-semibold tracking-wide text-accent uppercase">
                 {active ? "Active campaign" : "Campaign"} · {campaignWindowLabel(program)}
               </p>
@@ -155,7 +155,7 @@ export default async function ProgramPage({
             </div>
           </article>
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-2xl border border-brand/10 bg-mist p-5 sm:p-6">
+            <div className="rounded-lg border border-brand/10 bg-mist p-4 sm:rounded-2xl sm:p-6">
               <p className="text-xs font-semibold tracking-wide text-accent uppercase">
                 {active ? "Active now" : "Not in campaign window"}
               </p>
@@ -181,20 +181,20 @@ export default async function ProgramPage({
               ) : null}
               <div className="mt-5 grid grid-cols-1 gap-2">
                 {program.applyHref ? (
-                  <ButtonLink href={program.applyHref} variant="primary" className="min-h-11 w-full">
+                  <ButtonLink href={program.applyHref} variant="primary" className="w-full">
                     {program.applyCtaLabel ?? "Take part"}
                   </ButtonLink>
                 ) : null}
-                <ButtonLink href="#sponsor" variant="sunshine" className="min-h-11 w-full">
+                <ButtonLink href="#sponsor" variant="sunshine" className="w-full">
                   Donate now
                 </ButtonLink>
-                <ButtonLink href="/donate#sponsor" variant="outline" className="min-h-11 w-full">
+                <ButtonLink href="/donate#sponsor" variant="outline" className="w-full">
                   All programs
                 </ButtonLink>
               </div>
             </div>
             {otherPrograms.length ? (
-              <div className="rounded-2xl border border-brand/10 bg-paper p-5 sm:p-6">
+              <div className="rounded-lg border border-brand/10 bg-paper p-4 sm:rounded-2xl sm:p-6">
                 <p className="text-xs font-semibold tracking-wide text-muted uppercase">Other programs</p>
                 <ul className="mt-3 grid gap-3">
                   {otherPrograms.map((item) => (

@@ -63,26 +63,27 @@ export default async function DashboardPage({
   const message = noticeCopy(notice);
 
   return (
-    <Section className="space-y-10 bg-canvas px-4 sm:space-y-12">
+    <Section className="space-y-6 bg-canvas px-4 sm:space-y-12">
       {message ? (
-        <p className="rounded-xl bg-hope/20 px-4 py-3 text-sm font-medium text-ink" role="status">
+        <p className="rounded-lg bg-hope/20 px-3 py-2.5 text-sm font-medium text-ink sm:rounded-xl sm:px-4 sm:py-3" role="status">
           {message}
         </p>
       ) : null}
-      <div className="relative overflow-hidden rounded-2xl bg-brand px-5 py-8 text-paper shadow-[0_24px_60px_rgba(16,42,67,.18)] sm:px-9 sm:py-9">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+      <div className="relative overflow-hidden rounded-xl bg-brand px-4 py-5 text-paper sm:rounded-2xl sm:px-9 sm:py-9 sm:shadow-[0_24px_60px_rgba(16,42,67,.18)]">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
           <div>
             <p className="eyebrow text-sunshine">My space</p>
-            <h1 className="mt-3 font-display text-3xl sm:text-5xl">Welcome, {profile.fullName}</h1>
-            <p className="mt-3 max-w-xl text-paper/75">Events, active campaigns, and volunteer roles — all in one place.</p>
-            <p className="mt-5">
+            <h1 className="mt-2 font-display text-2xl sm:mt-3 sm:text-5xl">Welcome, {profile.fullName}</h1>
+            <p className="mt-2 max-w-xl text-sm text-paper/75 sm:mt-3 sm:text-base">Events, active campaigns, and volunteer roles — all in one place.</p>
+            <p className="mt-3 sm:mt-5">
               <Badge tone="sunshine">Active member</Badge>
             </p>
           </div>
           <form action={logoutAction}>
             <Button
               variant="outline"
-              className="min-h-11 w-full border-paper/25 bg-transparent text-paper hover:bg-paper/10 hover:text-paper sm:w-auto"
+              size="sm"
+              className="w-full border-paper/25 bg-transparent text-paper hover:bg-paper/10 hover:text-paper sm:w-auto"
               type="submit"
             >
               Sign out
@@ -91,8 +92,8 @@ export default async function DashboardPage({
         </div>
       </div>
 
-      <Card className="p-5 sm:p-8">
-        <h2 className="font-display text-2xl">Profile</h2>
+      <Card className="p-4 sm:p-8">
+        <h2 className="font-display text-xl sm:text-2xl">Profile</h2>
         <form action={updateAmbassadorProfile} className="mt-4 grid gap-4 sm:grid-cols-2">
           <Field label="Full name" name="fullName">
             <TextInput id="fullName" name="fullName" defaultValue={profile.fullName} />
@@ -130,32 +131,32 @@ export default async function DashboardPage({
             <TextArea id="currentAddress" name="currentAddress" defaultValue={profile.currentAddress ?? ""} />
           </Field>
           <div className="sm:col-span-2">
-            <Button type="submit" className="min-h-11 w-full sm:w-auto">
+            <Button type="submit" className="w-full sm:w-auto">
               Save profile
             </Button>
           </div>
         </form>
       </Card>
 
-      <Card className="p-5 sm:p-8">
-        <h2 className="font-display text-2xl">Network directory consent</h2>
+      <Card className="p-4 sm:p-8">
+        <h2 className="font-display text-xl sm:text-2xl">Network directory consent</h2>
         <p className="mt-2 text-sm text-muted">
           You are always counted in {profile.country}&apos;s total. Your name appears publicly only if you opt in.
         </p>
         <form action={toggleDirectoryConsent} className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <label className="flex min-h-11 items-center gap-2 text-sm">
+          <label className="flex min-h-10 items-center gap-2 text-sm">
             <input type="checkbox" name="consent" defaultChecked={profile.consentToDirectory} />
             Show my name on the public network
           </label>
-          <Button type="submit" size="sm" className="min-h-11 w-full sm:w-auto">
+          <Button type="submit" size="sm" className="w-full sm:w-auto">
             Update consent
           </Button>
         </form>
       </Card>
 
-      <div className="grid grid-cols-1 gap-x-6 gap-y-10 sm:grid-cols-2">
-        <Card className="p-5 sm:p-6">
-          <h2 className="font-display text-2xl">Upcoming events</h2>
+      <div className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-2 sm:gap-y-10">
+        <Card className="p-4 sm:p-6">
+          <h2 className="font-display text-xl sm:text-2xl">Upcoming events</h2>
           <ul className="mt-4 space-y-3 text-sm">
             {events.length ? (
               events.map((event) => (
@@ -171,8 +172,8 @@ export default async function DashboardPage({
             )}
           </ul>
         </Card>
-        <Card className="p-5 sm:p-6">
-          <h2 className="font-display text-2xl">Active campaigns</h2>
+        <Card className="p-4 sm:p-6">
+          <h2 className="font-display text-xl sm:text-2xl">Active campaigns</h2>
           <ul className="mt-4 space-y-3 text-sm">
             {campaigns.length ? (
               campaigns.map((campaign) => (
@@ -187,16 +188,16 @@ export default async function DashboardPage({
             )}
           </ul>
         </Card>
-        <Card className="p-5 sm:p-6 sm:col-span-2">
-          <h2 className="font-display text-2xl">Volunteer opportunities</h2>
-          <ul className="mt-4 grid gap-4">
+        <Card className="p-4 sm:col-span-2 sm:p-6">
+          <h2 className="font-display text-xl sm:text-2xl">Volunteer opportunities</h2>
+          <ul className="mt-4 grid gap-3 sm:gap-4">
             {opportunities.map((role) => {
               const mine = applied.has(role.id);
               const highlight = suggested.has(role.slug);
               return (
                 <li
                   key={role.id}
-                  className={`rounded-xl border p-4 ${highlight ? "border-accent bg-mist" : "border-brand/10"}`}
+                  className={`rounded-lg border p-3 sm:rounded-xl sm:p-4 ${highlight ? "border-accent bg-mist" : "border-brand/10"}`}
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div>
@@ -214,7 +215,7 @@ export default async function DashboardPage({
                         type="submit"
                         size="sm"
                         variant={mine ? "outline" : "primary"}
-                        className="min-h-11 w-full sm:w-auto"
+                        className="w-full sm:w-auto"
                         disabled={!mine && role.remaining <= 0}
                       >
                         {mine ? "Un-apply" : role.remaining <= 0 ? "Full" : "Apply"}

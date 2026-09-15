@@ -90,7 +90,7 @@ export function ProgramForm({
             <option value="archived">Archived</option>
           </Select>
         </Field>
-        <Button type="submit" className="min-h-11 w-full sm:w-auto">
+        <Button type="submit" className="w-full sm:w-auto">
           Save program
         </Button>
       </form>

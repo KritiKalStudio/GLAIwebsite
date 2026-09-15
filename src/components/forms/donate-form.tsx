@@ -12,7 +12,7 @@ export function DonateForm({
   campaigns: { slug: string; name: string }[];
 }) {
   return (
-    <form action={createSandboxDonation} className="editorial-card grid max-w-xl gap-7 bg-paper p-4 sm:p-7">
+    <form action={createSandboxDonation} className="editorial-card grid max-w-xl gap-5 bg-paper p-4 sm:gap-7 sm:p-7">
       <fieldset>
         <legend className="eyebrow">Step 1 · Giving frequency</legend>
         <div className="mt-3 flex flex-wrap gap-2">

@@ -1,7 +1,6 @@
-import Link from "next/link";
 import { CopySection, PageHero } from "@/components/blocks/page-sections";
 import { Section } from "@/components/blocks/section";
-import { Button } from "@/components/ui/button";
+import { Button, ButtonLink } from "@/components/ui/button";
 import { getSessionUser } from "@/lib/auth";
 import { getPublishedOpportunitiesWithSlots } from "@/lib/content/volunteers";
 import { toggleVolunteerRole } from "@/app/actions/volunteers";
@@ -45,13 +44,13 @@ export default async function VolunteerPage() {
         </p>
       </CopySection>
       <Section>
-        <h2 className="font-display text-3xl">Open roles</h2>
-        <ul className="mt-6 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <h2 className="font-display text-2xl sm:text-3xl">Open roles</h2>
+        <ul className="mt-4 grid grid-cols-1 gap-3 sm:mt-6 sm:gap-4 md:grid-cols-2">
           {opportunities.map((role) => {
             const mine = applied.has(role.id);
             return (
-              <li key={role.id} className="rounded-lg border border-brand/10 bg-paper p-5">
-                <h3 className="font-display text-xl">{role.title}</h3>
+              <li key={role.id} className="rounded-lg border border-brand/10 bg-paper p-4 sm:p-5">
+                <h3 className="font-display text-base sm:text-xl">{role.title}</h3>
                 <p className="mt-2 text-sm text-muted">{role.description}</p>
                 <p className="mt-2 text-xs text-accent">
                   {role.remaining} of {role.slots} slots open
@@ -65,19 +64,16 @@ export default async function VolunteerPage() {
                       <Button
                         type="submit"
                         size="sm"
-                        className="min-h-11 w-full sm:w-auto"
+                        className="w-full sm:w-auto"
                         disabled={!mine && role.remaining <= 0}
                       >
                         {mine ? "Un-apply" : role.remaining <= 0 ? "Full" : "Apply"}
                       </Button>
                     </form>
                   ) : (
-                    <Link
-                      href={`/signup?role=${encodeURIComponent(role.slug)}`}
-                      className="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-brand px-4 text-sm font-semibold text-paper sm:w-auto"
-                    >
+                    <ButtonLink href={`/signup?role=${encodeURIComponent(role.slug)}`} size="sm" className="w-full sm:w-auto">
                       Sign up for this role
-                    </Link>
+                    </ButtonLink>
                   )}
                 </div>
               </li>

@@ -20,7 +20,7 @@ export default async function SignupPage({
 
   return (
     <AuthPanel className="max-w-lg">
-      <h1 className="text-center font-display text-3xl sm:text-4xl">Create your membership</h1>
+      <h1 className="text-center font-display text-2xl sm:text-4xl">Create your membership</h1>
       <p className="mt-3 text-center text-sm leading-relaxed text-muted">
         Choose whether to receive your 4-digit confirmation code by WhatsApp or email. Confirm it and you are signed in
         — no review wait.
@@ -30,7 +30,7 @@ export default async function SignupPage({
           After confirmation we will assign you to <strong>{selected.title}</strong> if a slot is still open.
         </p>
       ) : null}
-      <div className="mt-8">
+      <div className="mt-5 sm:mt-8">
         <SignupForm role={selected?.slug ?? ""} />
       </div>
     </AuthPanel>

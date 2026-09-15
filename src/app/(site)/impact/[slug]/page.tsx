@@ -54,7 +54,7 @@ export default async function ProjectPage({
       />
       <Section className="bg-mist">
         <Kicker>Impact Portfolio</Kicker>
-        <h1 className="mt-3 font-display text-4xl">{project.title}</h1>
+        <h1 className="mt-3 font-display text-2xl sm:text-4xl">{project.title}</h1>
         <p className="mt-3 text-muted">
           {project.location}, {project.country}
           {project.occurredOn ? ` · ${formatDate(project.occurredOn)}` : ""}
@@ -78,7 +78,7 @@ export default async function ProjectPage({
             <p className="mt-2 leading-relaxed text-muted">{project.actionsTaken}</p>
           </div>
         </article>
-        <aside className="space-y-4 rounded-lg border border-brand/10 bg-paper p-6 text-sm">
+        <aside className="space-y-4 rounded-lg border border-brand/10 bg-paper p-4 text-sm sm:p-6">
           <p>
             <strong>Partners:</strong> {project.partners.join(", ") || "—"}
           </p>

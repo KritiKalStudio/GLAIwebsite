@@ -23,7 +23,7 @@ export default async function CountryNetworkPage({
   return (
     <Section>
       <Kicker>Network</Kicker>
-      <h1 className="mt-3 font-display text-4xl">{summary.country}</h1>
+      <h1 className="mt-3 font-display text-2xl sm:text-4xl">{summary.country}</h1>
       <p className="mt-3 text-muted">
         {summary.total} approved ambassadors counted. {directory.length} appear by name with consent.
       </p>

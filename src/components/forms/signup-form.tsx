@@ -87,7 +87,7 @@ export function SignupForm({ role = "" }: { role?: string }) {
           <TextInput id="organization" name="organization" required />
         </Field>
       </div>
-      <Button type="submit" disabled={pending} className="min-h-11 w-full sm:w-auto">
+      <Button type="submit" disabled={pending} className="w-full sm:w-auto">
         {pending ? "Sending code…" : otpChannel === "email" ? "Continue to email confirmation" : "Continue to WhatsApp confirmation"}
       </Button>
       <p className="text-sm text-muted">

@@ -15,7 +15,7 @@ export default async function LoginPage({
   }
   return (
     <AuthPanel>
-      <h1 className="text-center font-display text-3xl">Sign in</h1>
+      <h1 className="text-center font-display text-2xl sm:text-3xl">Sign in</h1>
       <p className="mt-3 text-center text-sm text-muted">
         Members use this form. Staff sign in on the{" "}
         <a href="/admin/login" className="font-semibold text-accent">
@@ -23,7 +23,7 @@ export default async function LoginPage({
         </a>
         .
       </p>
-      <div className="mt-8">
+      <div className="mt-5 sm:mt-8">
         <LoginForm next={next ?? ""} />
       </div>
     </AuthPanel>

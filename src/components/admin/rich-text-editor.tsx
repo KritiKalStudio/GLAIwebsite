@@ -35,5 +35,5 @@ export function RichTextEditor({ name, defaultValue = "" }: { name: string; defa
 }
 
 function Tool({ label, onClick, disabled, children }: { label: string; onClick: () => void; disabled?: boolean; children: React.ReactNode }) {
-  return <Button type="button" variant="ghost" size="sm" className="h-9 w-9 rounded-md p-0 hover:translate-y-0" aria-label={label} title={label} onClick={onClick} disabled={disabled}>{children}</Button>;
+  return <Button type="button" variant="ghost" size="sm" flat className="h-9 w-9 rounded-md p-0" aria-label={label} title={label} onClick={onClick} disabled={disabled}>{children}</Button>;
 }

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getSiteSettings } from "@/lib/content/settings";
 import { subscribeNewsletter } from "@/app/actions/public";
+import { Button } from "@/components/ui/button";
 
 export async function Footer() {
   const settings = await getSiteSettings();
@@ -10,20 +11,23 @@ export async function Footer() {
 
   return (
     <footer className="mt-auto overflow-hidden border-t border-brand/10 bg-brand text-paper">
-      <div className="relative mx-auto grid max-w-7xl gap-10 px-4 py-16 sm:grid-cols-2 lg:grid-cols-4 lg:px-8">
-        <div aria-hidden="true" className="absolute -right-24 -top-28 h-80 w-80 rounded-full border border-paper/10" />
-        <div className="sm:col-span-2 lg:col-span-1">
-          <div className="flex items-center gap-3"><Image src="/glai-mark.png" width={54} height={46} alt="" className="h-11 w-11 rounded-full bg-paper object-cover object-top" /><span className="font-display text-2xl font-bold tracking-[-.06em] text-paper">GLAI</span></div>
+      <div className="relative mx-auto grid max-w-7xl grid-cols-3 gap-x-3 gap-y-3 px-4 py-4 lg:grid-cols-4 lg:gap-10 lg:px-8 lg:py-16">
+        <div aria-hidden="true" className="absolute -right-24 -top-28 hidden h-80 w-80 rounded-full border border-paper/10 md:block" />
+        <div className="col-span-3 lg:col-span-1">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <Image src="/glai-mark.png" width={54} height={46} alt="" className="h-7 w-7 rounded-full bg-paper object-cover object-top sm:h-11 sm:w-11" />
+            <span className="font-display text-lg font-bold tracking-[-.06em] text-paper sm:text-2xl">GLAI</span>
+          </div>
         </div>
         {footer?.columns.map((column) => (
           <div key={column.title}>
-            <p className="text-xs font-semibold tracking-[0.18em] text-sunshine uppercase">
+            <p className="text-[10px] font-semibold tracking-[0.18em] text-sunshine uppercase sm:text-xs">
               {column.title}
             </p>
-            <ul className="mt-4 space-y-2">
+            <ul className="mt-1.5 space-y-1 sm:mt-4 sm:space-y-2">
               {column.links.map((link) => (
                 <li key={link.href}>
-                  <Link className="text-sm text-paper/85 hover:text-paper" href={link.href}>
+                  <Link className="text-[11px] leading-snug text-paper/85 hover:text-paper sm:text-sm" href={link.href}>
                     {link.label}
                   </Link>
                 </li>
@@ -33,7 +37,7 @@ export async function Footer() {
         ))}
       </div>
       <div className="border-t border-paper/10">
-        <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:justify-between lg:gap-6 lg:px-8 lg:py-6">
           <form action={subscribeNewsletter} className="flex w-full max-w-md gap-2">
             <label className="sr-only" htmlFor="newsletter-email">
               {footer?.newsletterLabel ?? "Stay connected"}
@@ -44,16 +48,13 @@ export async function Footer() {
               type="email"
               required
               placeholder={footer?.newsletterPlaceholder ?? "Your email address"}
-              className="min-w-0 flex-1 rounded-full border border-paper/20 bg-paper/10 px-4 py-2 text-sm text-paper placeholder:text-paper/60"
+              className="min-w-0 flex-1 rounded-full border border-paper/20 bg-paper/10 px-3 py-2 text-sm text-paper placeholder:text-paper/60 sm:px-4"
             />
-            <button
-              type="submit"
-              className="rounded-full bg-sunshine px-4 py-2 text-sm font-semibold text-ink"
-            >
+            <Button type="submit" variant="sunshine" size="sm">
               {footer?.newsletterLabel ?? "Stay connected"}
-            </button>
+            </Button>
           </form>
-          <div className="flex flex-wrap gap-4 text-xs text-paper/70">
+          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-paper/70">
             {footer?.legalLinks.map((link) => (
               <Link key={link.href} href={link.href} className="hover:text-paper">
                 {link.label}
@@ -61,7 +62,7 @@ export async function Footer() {
             ))}
           </div>
         </div>
-        <p className="px-4 pb-8 text-center text-xs text-paper/55 lg:px-6">
+        <p className="px-4 pb-3 text-center text-[11px] text-paper/55 sm:pb-8 sm:text-xs lg:px-6">
           © {year} {footer?.copyright ?? "Global Love Ambassadors Initiative. All rights reserved."}
         </p>
       </div>

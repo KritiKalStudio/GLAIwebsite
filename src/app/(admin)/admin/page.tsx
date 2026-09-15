@@ -26,14 +26,14 @@ export default async function AdminHomePage() {
   ]);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       <div>
-        <h1 className="font-display text-3xl">What needs attention</h1>
+        <h1 className="font-display text-2xl sm:text-3xl">What needs attention</h1>
         <p className="mt-2 text-sm text-muted">
           Task-based home for staff. Nothing here is technical database language.
         </p>
       </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
         <Stat href="/admin/membership" label="Applications to review" value={pendingApps.length} />
         <Stat href="/admin/messages" label="Unread messages" value={unread.length} />
         <Stat href="/admin/volunteers" label="Volunteer applications" value={pendingVolunteers.length} />
@@ -58,9 +58,9 @@ export default async function AdminHomePage() {
 
 function Stat({ href, label, value }: { href: string; label: string; value: number }) {
   return (
-    <Link href={href} className="rounded-lg border border-brand/10 bg-paper p-5">
-      <p className="text-sm text-muted">{label}</p>
-      <p className="mt-2 font-display text-3xl text-brand">{value}</p>
+    <Link href={href} className="rounded-lg border border-brand/10 bg-paper p-3 transition hover:border-accent/40 hover:bg-mist active:scale-[0.98] sm:p-5">
+      <p className="text-xs text-muted sm:text-sm">{label}</p>
+      <p className="mt-1 font-display text-2xl text-brand sm:mt-2 sm:text-3xl">{value}</p>
     </Link>
   );
 }

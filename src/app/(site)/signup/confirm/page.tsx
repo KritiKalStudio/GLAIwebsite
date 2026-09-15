@@ -23,7 +23,7 @@ export default async function SignupConfirmPage({
 
   return (
     <AuthPanel>
-      <h1 className="text-center font-display text-3xl">
+      <h1 className="text-center font-display text-2xl sm:text-3xl">
         {channel === "email" ? "Check your email" : "Check WhatsApp"}
       </h1>
       <p className="mt-3 text-center text-sm leading-relaxed text-muted">
@@ -31,7 +31,7 @@ export default async function SignupConfirmPage({
           ? "Enter the 4-digit code we sent to confirm that your email address is active."
           : "Enter the 4-digit code we sent to confirm that your WhatsApp number is active."}
       </p>
-      <div className="mt-8">
+      <div className="mt-5 sm:mt-8">
         <SignupConfirmForm
           id={id}
           channel={channel}

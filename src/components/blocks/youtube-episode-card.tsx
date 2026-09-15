@@ -21,8 +21,8 @@ export function YoutubeEpisodeCard({
   const watchUrl = youtubeWatchUrl(youtubeId);
 
   return (
-    <article className="editorial-card overflow-hidden bg-paper">
-      <div className="relative aspect-video bg-mist">
+    <article className={playing ? "youtube-card youtube-card-playing" : "youtube-card"}>
+      <div className="youtube-card-media">
         {playing ? (
           <iframe
             className="absolute inset-0 h-full w-full"
@@ -38,11 +38,11 @@ export function YoutubeEpisodeCard({
             onClick={() => setPlaying(true)}
             aria-label={`Play ${title}`}
           >
-            <Image src={poster} alt="" fill className="object-cover" sizes="(min-width: 1024px) 560px, 100vw" />
+            <Image src={poster} alt="" fill className="object-cover" sizes="(max-width: 767px) 120px, (min-width: 1024px) 560px, 100vw" />
             <span className="absolute inset-0 bg-brand/25 transition group-hover:bg-brand/15" />
             <span className="absolute inset-0 grid place-items-center">
-              <span className="grid h-14 w-14 place-items-center rounded-full bg-sunshine text-ink shadow-lg transition group-hover:scale-105">
-                <span className="ml-0.5 text-lg" aria-hidden>
+              <span className="grid h-8 w-8 place-items-center rounded-full bg-sunshine text-ink shadow-lg transition group-hover:scale-105 sm:h-14 sm:w-14">
+                <span className="ml-0.5 text-sm sm:text-lg" aria-hidden>
                   ▶
                 </span>
               </span>
@@ -50,9 +50,9 @@ export function YoutubeEpisodeCard({
           </button>
         )}
       </div>
-      <div className="space-y-3 p-5">
-        <h2 className="font-display text-xl text-brand">{title}</h2>
-        {description ? <p className="text-sm leading-relaxed text-muted">{description}</p> : null}
+      <div className="youtube-card-body">
+        <h2 className="font-display text-sm leading-snug text-brand sm:text-xl">{title}</h2>
+        {description ? <p className="line-clamp-2 text-xs leading-snug text-muted sm:line-clamp-none sm:text-sm">{description}</p> : null}
         <ButtonLink href={watchUrl} variant="outline" size="sm">
           Open in YouTube
         </ButtonLink>

@@ -20,7 +20,7 @@ export default async function PodcastPage() {
       />
       <Section>
         {episodes.length ? (
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
             {episodes.map((episode) => (
               <YoutubeEpisodeCard
                 key={episode.id}

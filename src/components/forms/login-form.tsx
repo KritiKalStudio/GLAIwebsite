@@ -18,7 +18,7 @@ export function LoginForm({ next }: { next: string }) {
       <Field label="Password" name="password">
         <TextInput id="password" name="password" type="password" required autoComplete="current-password" />
       </Field>
-      <Button type="submit" disabled={pending} className="min-h-11 w-full">
+      <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Signing in…" : "Sign in"}
       </Button>
       <p className="text-sm">

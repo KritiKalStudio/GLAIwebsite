@@ -10,7 +10,7 @@ export function BankDetailsCard({
 }) {
   if (!bank?.accountNumber && !bank?.bankName && !bank?.accountName) {
     return (
-      <div className="editorial-card bg-mist p-6">
+      <div className="editorial-card bg-mist p-4 sm:p-6">
         <p className="eyebrow">Bank transfer</p>
         <h2 className="mt-3 font-display text-2xl text-brand">Account details coming soon</h2>
         <p className="mt-3 text-sm leading-relaxed text-muted">

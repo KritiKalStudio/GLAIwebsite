@@ -19,7 +19,7 @@ export default function StyleGuidePage() {
     <>
       <Section className="bg-mist">
         <Kicker>Stage 2</Kicker>
-        <h1 className="mt-3 font-display text-4xl">Design system</h1>
+        <h1 className="mt-3 font-display text-2xl sm:text-4xl">Design system</h1>
         <p className="mt-3 max-w-2xl text-muted">
           Tokens live in CSS variables. Components use token utilities, not raw hex values.
         </p>

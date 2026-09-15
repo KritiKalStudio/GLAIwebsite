@@ -22,7 +22,7 @@ export default async function StaffLoginPage({
 
   return (
     <div className="flex min-h-screen flex-col bg-brand text-paper">
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-16">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-8 sm:py-16">
         <Link href="/" className="flex items-center gap-3">
           <Image
             src="/glai-mark.png"
@@ -38,7 +38,7 @@ export default async function StaffLoginPage({
             </small>
           </span>
         </Link>
-        <div className="mt-10 rounded-2xl bg-paper p-6 text-ink shadow-[0_24px_60px_-32px_rgba(0,0,0,.55)]">
+        <div className="mt-8 rounded-xl bg-paper p-4 text-ink shadow-[0_24px_60px_-32px_rgba(0,0,0,.55)] sm:mt-10 sm:rounded-2xl sm:p-6">
           <h1 className="font-display text-2xl text-brand">Sign in to the console</h1>
           <p className="mt-2 text-sm leading-relaxed text-muted">
             Use the administrator email and password for this site. Member accounts cannot open this

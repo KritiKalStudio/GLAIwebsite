@@ -247,7 +247,7 @@ export default async function AdminSettingsPage() {
             defaultValue={JSON.stringify(settings?.designTokens ?? {}, null, 2)}
           />
         </Field>
-        <Button type="submit" className="min-h-11 w-full sm:w-auto">
+        <Button type="submit" className="w-full sm:w-auto">
           Save settings
         </Button>
       </form>

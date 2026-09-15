@@ -58,7 +58,7 @@ export default async function StoryPage({
       />
       <Section className="bg-mist pb-8">
         <Kicker>{story.category.replaceAll("_", " ")}</Kicker>
-        <h1 className="mt-3 max-w-3xl font-display text-4xl">{story.title}</h1>
+        <h1 className="mt-3 max-w-3xl font-display text-2xl sm:text-4xl">{story.title}</h1>
         <p className="mt-4 text-sm text-muted">
           {story.authorName ? `${story.authorName} · ` : ""}
           {formatDate(story.publishedAt)}
@@ -67,7 +67,7 @@ export default async function StoryPage({
       {story.featuredImageUrl ? <MediaFrame
         src={story.featuredImageUrl}
         alt={story.title}
-        className="relative mx-auto aspect-[21/9] max-w-6xl overflow-hidden bg-mist"
+        className="relative mx-auto aspect-[16/9] max-w-6xl overflow-hidden bg-mist lg:aspect-[21/9]"
       /> : null}
       <Section>
         <article className="rich-content mx-auto" dangerouslySetInnerHTML={{ __html: sanitizeRichText(editorHtml(story.body)) }} />

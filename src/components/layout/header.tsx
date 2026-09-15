@@ -36,10 +36,10 @@ export async function Header() {
           </div>
         </div>
       </div>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3.5 lg:px-8">
-        <Link href="/" className="flex min-w-0 items-center gap-2.5 group" aria-label="Global Love Ambassadors Initiative home">
-          <Image src="/glai-mark.png" width={50} height={42} priority alt="" className="h-10 w-12 object-cover object-top mix-blend-multiply" />
-          <span className="font-display text-2xl font-bold tracking-[-.06em] text-brand sm:text-[1.65rem]">GLAI</span>
+      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-2.5 lg:px-8 lg:py-3.5">
+        <Link href="/" className="flex min-w-0 items-center gap-2 group" aria-label="Global Love Ambassadors Initiative home">
+          <Image src="/glai-mark.png" width={50} height={42} priority alt="" className="h-8 w-10 object-cover object-top mix-blend-multiply sm:h-10 sm:w-12" />
+          <span className="font-display text-xl font-bold tracking-[-.06em] text-brand sm:text-[1.65rem]">GLAI</span>
         </Link>
         <nav className="hidden items-center gap-6 xl:flex" aria-label="Primary">
           {primaryNav.map((item) => (

@@ -28,8 +28,8 @@ export default async function ReceiptPage({
   return (
     <Section className="max-w-xl">
       <p className="text-xs tracking-wide text-accent uppercase">Receipt</p>
-      <h1 className="mt-2 font-display text-3xl">Thank you</h1>
-      <dl className="mt-8 space-y-3 rounded-lg border border-brand/10 bg-paper p-6 text-sm">
+      <h1 className="mt-2 font-display text-2xl sm:text-3xl">Thank you</h1>
+      <dl className="mt-5 space-y-3 rounded-lg border border-brand/10 bg-paper p-4 text-sm sm:mt-8 sm:p-6">
         <div className="flex justify-between">
           <dt>Receipt</dt>
           <dd>{donation.processorRef}</dd>

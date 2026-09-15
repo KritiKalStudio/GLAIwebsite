@@ -53,7 +53,7 @@ export function ImagePicker({
             <img src={url} alt="" className="h-24 w-24 rounded-full object-cover ring-2 ring-brand/10" />
             <button
               type="button"
-              className="min-h-11 text-sm font-semibold text-accent"
+              className="btn btn-flat min-h-10 text-sm font-semibold text-accent"
               onClick={() => setUrl("")}
             >
               Remove picture

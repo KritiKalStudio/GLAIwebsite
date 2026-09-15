@@ -38,7 +38,7 @@ export function SignupConfirmForm({
           className="text-center text-2xl tracking-[0.4em]"
         />
       </Field>
-      <Button type="submit" disabled={pending} className="min-h-11 w-full">
+      <Button type="submit" disabled={pending} className="w-full">
         {pending ? "Confirming…" : "Confirm and open dashboard"}
       </Button>
       <p className="text-sm text-muted">

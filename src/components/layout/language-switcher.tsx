@@ -1,4 +1,5 @@
 import { setLocale } from "@/app/actions/locale";
+import { Button } from "@/components/ui/button";
 import type { LanguageOption } from "@/db/schema/settings";
 
 export function LanguageSwitcher({
@@ -16,19 +17,18 @@ export function LanguageSwitcher({
       {active.map((language) => (
         <form action={setLocale} key={language.code}>
           <input type="hidden" name="locale" value={language.code} />
-          <button
+          <Button
             type="submit"
-            className={
-              language.code === current
-                ? "rounded-full bg-brand px-2.5 py-1 text-xs font-semibold text-paper"
-                : "rounded-full px-2.5 py-1 text-xs font-semibold text-muted hover:bg-mist hover:text-brand"
-            }
+            variant={language.code === current ? "primary" : "ghost"}
+            size="sm"
+            flat
+            className="min-h-8 px-2.5 py-1"
             aria-pressed={language.code === current}
             lang={language.code}
           >
             {language.code.toUpperCase()}
             <span className="sr-only"> {language.name}</span>
-          </button>
+          </Button>
         </form>
       ))}
     </div>

@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { ButtonLink } from "@/components/ui/button";
-import { Badge, Card } from "@/components/ui/card";
+import { Badge, Card, MediaCard } from "@/components/ui/card";
 import { Kicker, Section } from "@/components/blocks/section";
 import { editorHtml, sanitizeRichText } from "@/lib/rich-text";
 
@@ -37,19 +37,19 @@ export function PageHero({
         />
       ) : null}
       <div className="absolute inset-0 bg-linear-to-r from-brand via-brand/94 to-brand/45" />
-      <div aria-hidden="true" className="absolute -bottom-20 right-[8%] h-72 w-72 rounded-full border border-paper/20" />
-      <div aria-hidden="true" className="absolute -bottom-10 right-[12%] h-52 w-52 rounded-full border border-paper/15" />
-      <div className="relative mx-auto flex min-h-[500px] max-w-7xl items-center px-4 py-20 lg:min-h-[570px] lg:px-8 lg:py-24">
+      <div aria-hidden="true" className="absolute -bottom-20 right-[8%] hidden h-72 w-72 rounded-full border border-paper/20 md:block" />
+      <div aria-hidden="true" className="absolute -bottom-10 right-[12%] hidden h-52 w-52 rounded-full border border-paper/15 md:block" />
+      <div className="relative mx-auto flex max-w-7xl items-center px-4 py-10 sm:py-16 lg:min-h-[570px] lg:px-8 lg:py-24">
         <div className="reveal">
           {kicker ? <p className="eyebrow text-sunshine">{kicker}</p> : null}
-          <div className="mb-6 h-px w-14 bg-sunshine" />
-          <h1 className="max-w-4xl font-display text-5xl leading-[1.04] text-balance sm:text-6xl lg:text-7xl">
+          <div className="mb-3 h-px w-10 bg-sunshine md:mb-6 md:w-14" />
+          <h1 className="max-w-4xl font-display text-[1.85rem] leading-[1.12] text-balance sm:text-5xl lg:text-7xl">
             {headline}
           </h1>
           {subheadline ? (
-            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-paper/88 lg:text-xl">{subheadline}</p>
+            <p className="mt-3 max-w-2xl text-sm leading-relaxed text-paper/88 sm:mt-7 sm:text-lg lg:text-xl">{subheadline}</p>
           ) : null}
-          <div className="mt-10 flex flex-wrap gap-3">
+          <div className="mt-5 flex flex-wrap gap-2 sm:mt-10 sm:gap-3">
             {primary ? (
               <ButtonLink href={primary.href} variant="sunshine" size="lg">
                 {primary.label}
@@ -84,13 +84,13 @@ export function ProblemSection({
   return (
     <Section className="surface-grid bg-canvas">
       <Kicker>The problem</Kicker>
-      <h2 className="editorial-rule mt-3 max-w-3xl font-display text-4xl text-balance sm:text-5xl">{heading}</h2>
-      {intro ? <p className="mt-4 max-w-2xl text-lg text-muted">{intro}</p> : null}
-      <ul className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <h2 className="editorial-rule mt-3 max-w-3xl font-display text-2xl text-balance sm:text-4xl lg:text-5xl">{heading}</h2>
+      {intro ? <p className="mt-3 max-w-2xl text-sm text-muted sm:mt-4 sm:text-lg">{intro}</p> : null}
+      <ul className="mt-6 grid grid-cols-2 gap-2 sm:mt-10 sm:gap-4 lg:grid-cols-3">
         {items.map((item) => (
-          <li key={item.title} className="editorial-card bg-paper p-6 transition hover:-translate-y-1">
-            <h3 className="font-display text-xl text-brand">{item.title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted">{item.body}</p>
+          <li key={item.title} className="rounded-md border border-brand/10 bg-paper p-3 sm:rounded-xl sm:p-6 sm:transition sm:hover:-translate-y-1">
+            <h3 className="font-display text-sm text-brand sm:text-xl">{item.title}</h3>
+            <p className="mt-1 text-xs leading-relaxed text-muted sm:mt-2 sm:text-sm">{item.body}</p>
           </li>
         ))}
       </ul>
@@ -109,13 +109,13 @@ export function StatStrip({
 }) {
   return (
     <Section className="bg-brand text-paper">
-      {heading ? <h2 className="font-display text-3xl">{heading}</h2> : null}
-      {note ? <p className="mt-3 max-w-2xl text-sm text-paper/70">{note}</p> : null}
-      <dl className="mt-8 grid gap-4 sm:grid-cols-3">
+      {heading ? <h2 className="font-display text-2xl sm:text-3xl">{heading}</h2> : null}
+      {note ? <p className="mt-2 max-w-2xl text-xs text-paper/70 sm:mt-3 sm:text-sm">{note}</p> : null}
+      <dl className="mt-5 grid grid-cols-3 gap-2 sm:mt-8 sm:gap-4">
         {stats.map((stat) => (
-          <div key={stat.key} className="rounded-lg border border-paper/15 bg-paper/8 p-6 backdrop-blur-sm">
-            <dt className="text-sm text-paper/70">{stat.label}</dt>
-            <dd className="mt-2 font-display text-3xl text-sunshine">{stat.valueDisplay}</dd>
+          <div key={stat.key} className="rounded-md border border-paper/15 bg-paper/8 p-2.5 backdrop-blur-sm sm:rounded-lg sm:p-6">
+            <dt className="text-[10px] leading-tight text-paper/70 sm:text-sm">{stat.label}</dt>
+            <dd className="mt-1 font-display text-lg text-sunshine sm:mt-2 sm:text-3xl">{stat.valueDisplay}</dd>
           </div>
         ))}
       </dl>
@@ -140,8 +140,8 @@ export function ProgramCards({
 }) {
   return (
     <Section>
-      {heading ? <h2 className="editorial-rule font-display text-4xl sm:text-5xl">{heading}</h2> : null}
-      <div className="mt-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+      {heading ? <h2 className="editorial-rule font-display text-2xl sm:text-4xl lg:text-5xl">{heading}</h2> : null}
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-10 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
         {programs.map((program) => {
           const active =
             program.status === undefined
@@ -150,21 +150,12 @@ export function ProgramCards({
                 !(program.startsAt && new Date(program.startsAt).getTime() > Date.now()) &&
                 !(program.endsAt && new Date(program.endsAt).getTime() < Date.now());
           return (
-          <Card key={program.slug} className="editorial-card transition hover:-translate-y-1">
-            {program.featuredImageUrl ? (
-              <div className="relative aspect-[16/10]">
-                <Image src={program.featuredImageUrl} alt="" fill className="object-cover" sizes="400px" />
-              </div>
-            ) : null}
-            <div className="p-5">
-              <p className="text-xs font-semibold tracking-wide uppercase text-accent">{active ? "Active" : "Inactive"}</p>
-              <h3 className="mt-2 font-display text-xl text-brand">{program.name}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted">{program.shortDescription}</p>
-              <ButtonLink href={`/our-work/${program.slug}`} variant="ghost" size="sm" className="mt-4 min-h-11 px-0">
-                Read more
-              </ButtonLink>
-            </div>
-          </Card>
+          <MediaCard key={program.slug} href={`/our-work/${program.slug}`} imageUrl={program.featuredImageUrl}>
+            <p className="text-[10px] font-semibold tracking-wide text-accent uppercase sm:text-xs">{active ? "Active" : "Inactive"}</p>
+            <h3 className="mt-0.5 font-display text-sm text-brand sm:mt-2 sm:text-xl">{program.name}</h3>
+            <p className="mt-1 text-xs leading-relaxed text-muted sm:mt-2 sm:text-sm">{program.shortDescription}</p>
+            <span className="mt-2 inline-block text-xs font-semibold text-brand sm:mt-4">Read more</span>
+          </MediaCard>
           );
         })}
       </div>
@@ -181,28 +172,19 @@ export function StoryCards({
 }) {
   return (
     <Section>
-      <div className="flex items-end justify-between gap-4">
-        <h2 className="font-display text-3xl">{heading ?? "Stories of change"}</h2>
+      <div className="flex items-end justify-between gap-3">
+        <h2 className="font-display text-2xl sm:text-3xl">{heading ?? "Stories of change"}</h2>
         <ButtonLink href="/stories" variant="ghost" size="sm">
           All stories
         </ButtonLink>
       </div>
-      <div className="mt-8 grid gap-6 md:grid-cols-3">
+      <div className="mt-5 grid gap-3 sm:mt-8 sm:gap-6 md:grid-cols-3">
         {stories.map((story) => (
-          <Card key={story.slug}>
-            {story.featuredImageUrl ? (
-              <div className="relative aspect-[16/10]">
-                <Image src={story.featuredImageUrl} alt="" fill className="object-cover" sizes="400px" />
-              </div>
-            ) : null}
-            <div className="p-5">
-              <h3 className="font-display text-xl text-brand">{story.title}</h3>
-              <p className="mt-2 text-sm text-muted">{story.excerpt}</p>
-              <ButtonLink href={`/stories/${story.slug}`} variant="ghost" size="sm" className="mt-4 px-0">
-                Read the story
-              </ButtonLink>
-            </div>
-          </Card>
+          <MediaCard key={story.slug} href={`/stories/${story.slug}`} imageUrl={story.featuredImageUrl} imageAlt={story.title}>
+            <h3 className="font-display text-sm text-brand sm:text-xl">{story.title}</h3>
+            <p className="mt-1 text-xs text-muted sm:mt-2 sm:text-sm">{story.excerpt}</p>
+            <span className="mt-2 inline-block text-xs font-semibold text-brand sm:mt-4">Read the story</span>
+          </MediaCard>
         ))}
       </div>
     </Section>
@@ -218,16 +200,16 @@ export function CtaBanner({
 }) {
   return (
     <Section className="bg-brand text-paper">
-      <h2 className="font-display text-3xl sm:text-4xl">{heading}</h2>
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
+      <h2 className="font-display text-2xl sm:text-4xl">{heading}</h2>
+      <div className="mt-5 divide-y divide-paper/15 overflow-hidden rounded-lg border border-paper/15 md:mt-8 md:grid md:grid-cols-3 md:gap-4 md:divide-y-0 md:overflow-visible md:border-0">
         {items.map((item) => (
           <a
             key={item.href}
             href={item.href}
-            className="rounded-lg border border-paper/15 bg-paper/5 p-5 transition hover:bg-paper/10"
+            className="block px-3 py-3 transition hover:bg-paper/10 md:rounded-lg md:border md:border-paper/15 md:bg-paper/5 md:p-5"
           >
-            <h3 className="font-display text-xl">{item.title}</h3>
-            <p className="mt-2 text-sm text-paper/80">{item.body}</p>
+            <h3 className="font-display text-base md:text-xl">{item.title}</h3>
+            <p className="mt-1 text-xs text-paper/80 md:mt-2 md:text-sm">{item.body}</p>
           </a>
         ))}
       </div>
@@ -249,9 +231,9 @@ export function DonateCta({
   return (
     <Section className="bg-sunshine/20">
       <div className="max-w-2xl">
-        <h2 className="font-display text-3xl">{heading}</h2>
-        <p className="mt-4 text-muted">{body}</p>
-        <ButtonLink href={href} className="mt-6" variant="primary">
+        <h2 className="font-display text-2xl sm:text-3xl">{heading}</h2>
+        <p className="mt-2 text-sm text-muted sm:mt-4 sm:text-base">{body}</p>
+        <ButtonLink href={href} className="mt-4 sm:mt-6" variant="primary">
           {label}
         </ButtonLink>
       </div>
@@ -269,8 +251,8 @@ export function CopySection({
   className?: string;
 }) {
   return (
-    <Section className={className ?? "py-12 lg:py-16"}>
-      {heading ? <h2 className="font-display text-3xl">{heading}</h2> : null}
+    <Section className={className ?? "py-8 lg:py-16"}>
+      {heading ? <h2 className="font-display text-2xl sm:text-3xl">{heading}</h2> : null}
       <div className="rich-content mt-4">{children}</div>
     </Section>
   );
@@ -311,37 +293,37 @@ export function PeopleGrid({
   if (!people.length) return null;
   return (
     <Section>
-      <h2 className="font-display text-3xl">{heading}</h2>
-      {intro ? <p className="mt-2 max-w-2xl text-muted">{intro}</p> : null}
-      <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <h2 className="font-display text-2xl sm:text-3xl">{heading}</h2>
+      {intro ? <p className="mt-2 max-w-2xl text-sm text-muted sm:text-base">{intro}</p> : null}
+      <div className="mt-5 grid grid-cols-1 gap-3 sm:mt-8 sm:grid-cols-2 sm:gap-5">
         {people.map((person) => (
-          <Card key={person.id} className="editorial-card p-5 transition hover:-translate-y-1">
-            <div className="flex items-start gap-4">
+          <Card key={person.id} className="p-3 sm:p-5">
+            <div className="flex items-start gap-3 sm:gap-4">
               {person.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
                   src={person.photoUrl}
                   alt=""
-                  className="h-20 w-20 shrink-0 rounded-full object-cover ring-2 ring-brand/10 sm:h-24 sm:w-24"
+                  className="h-14 w-14 shrink-0 rounded-full object-cover ring-2 ring-brand/10 sm:h-24 sm:w-24"
                 />
               ) : (
                 <span
                   aria-hidden
-                  className="grid h-20 w-20 shrink-0 place-items-center rounded-full bg-brand text-lg font-semibold text-paper sm:h-24 sm:w-24"
+                  className="grid h-14 w-14 shrink-0 place-items-center rounded-full bg-brand text-sm font-semibold text-paper sm:h-24 sm:w-24 sm:text-lg"
                 >
                   {personInitials(person.name)}
                 </span>
               )}
               <div className="min-w-0">
                 <Badge>{PEOPLE_GROUP_LABEL[person.group] ?? person.group}</Badge>
-                <h3 className="mt-2 font-display text-xl text-brand">{person.name}</h3>
-                <p className="text-sm text-accent">{person.position}</p>
+                <h3 className="mt-1 font-display text-base text-brand sm:mt-2 sm:text-xl">{person.name}</h3>
+                <p className="text-xs text-accent sm:text-sm">{person.position}</p>
               </div>
             </div>
             {person.responsibility ? (
-              <p className="mt-4 text-xs font-semibold tracking-wide text-muted uppercase">{person.responsibility}</p>
+              <p className="mt-3 text-[10px] font-semibold tracking-wide text-muted uppercase sm:mt-4 sm:text-xs">{person.responsibility}</p>
             ) : null}
-            <p className="mt-3 text-sm leading-relaxed text-muted">{person.bio}</p>
+            <p className="mt-2 text-xs leading-relaxed text-muted sm:mt-3 sm:text-sm">{person.bio}</p>
           </Card>
         ))}
       </div>
@@ -358,10 +340,10 @@ export function FaqList({
 }) {
   return (
     <Section>
-      <h2 className="font-display text-3xl">{heading}</h2>
-      <div className="mt-8 divide-y divide-brand/10 border-y border-brand/10">
+      <h2 className="font-display text-2xl sm:text-3xl">{heading}</h2>
+      <div className="mt-5 divide-y divide-brand/10 border-y border-brand/10 sm:mt-8">
         {faqs.map((item, index) => (
-          <details key={item.id ?? `${item.question}-${index}`} className="group py-5">
+          <details key={item.id ?? `${item.question}-${index}`} className="group py-3 sm:py-5">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-6 font-semibold marker:hidden">
               {item.question}
               <span className="text-xl text-sunshine transition group-open:rotate-45">+</span>
@@ -376,8 +358,8 @@ export function FaqList({
 
 export function LegalBody({ heading, body }: { heading: string; body: string }) {
   return (
-    <Section className="py-12 lg:py-16">
-      <h1 className="font-display text-4xl">{heading}</h1>
+    <Section className="py-8 lg:py-16">
+      <h1 className="font-display text-2xl sm:text-4xl">{heading}</h1>
       <div
         className="rich-content mt-6"
         dangerouslySetInnerHTML={{ __html: sanitizeRichText(editorHtml(body)) }}

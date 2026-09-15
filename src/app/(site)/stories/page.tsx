@@ -1,8 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { Kicker, Section } from "@/components/blocks/section";
 import { YoutubeEpisodeCard } from "@/components/blocks/youtube-episode-card";
-import { Badge, Card } from "@/components/ui/card";
+import { Badge, MediaCard } from "@/components/ui/card";
 import { getPublishedEvents } from "@/lib/content/events";
 import { getPublishedStories, type StoryCategory } from "@/lib/content/stories";
 import { getPublishedVideos } from "@/lib/content/videos";
@@ -44,17 +43,17 @@ export default async function StoriesPage({
     <>
       <Section className="bg-mist">
         <Kicker>Editorial</Kicker>
-        <h1 className="mt-3 font-display text-4xl">Stories & News</h1>
-        <p className="mt-3 max-w-2xl text-muted">
+        <h1 className="mt-3 font-display text-2xl sm:text-4xl">Stories & News</h1>
+        <p className="mt-3 max-w-2xl text-sm text-muted sm:text-base">
           Written reporting lives here. Films from the GLAI news channel appear below as they are published. Unpublished
           drafts never appear.
         </p>
-        <div className="mt-6 flex flex-wrap gap-2">
+        <div className="-mx-4 mt-5 flex gap-2 overflow-x-auto px-4 pb-1 sm:mx-0 sm:mt-6 sm:flex-wrap sm:overflow-visible sm:px-0">
           {categories.map((item) => (
             <Link
               key={item.slug}
               href={item.slug === "all" ? "/stories" : `/stories?category=${item.slug}`}
-              className={`rounded-full border px-3 py-1.5 text-sm font-medium ${
+              className={`shrink-0 rounded-full border px-2.5 py-1 text-xs font-medium transition hover:border-brand sm:px-3 sm:py-1.5 sm:text-sm ${
                 (item.slug === "all" && !selected) || item.slug === selected
                   ? "bg-brand text-paper"
                   : "bg-paper text-ink"
@@ -67,11 +66,11 @@ export default async function StoriesPage({
       </Section>
       {newsVideos.length ? (
         <Section>
-          <h2 className="font-display text-3xl">From the news channel</h2>
+          <h2 className="font-display text-2xl sm:text-3xl">From the news channel</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">
             Watch on this page or open the same film on YouTube.
           </p>
-          <div className="mt-8 grid gap-6 lg:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:mt-8 sm:gap-6 lg:grid-cols-2">
             {newsVideos.map((episode) => (
               <YoutubeEpisodeCard
                 key={episode.id}
@@ -86,48 +85,30 @@ export default async function StoriesPage({
       ) : null}
       {publishedEvents.length && showEvents ? (
         <Section>
-          <h2 className="font-display text-3xl">Events</h2>
+          <h2 className="font-display text-2xl sm:text-3xl">Events</h2>
           <p className="mt-2 max-w-2xl text-sm text-muted">Gatherings published from the Events console.</p>
-          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-4 grid grid-cols-1 gap-3 sm:mt-6 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {publishedEvents.map((event) => (
-              <Link key={event.id} href={`/events/${event.slug}`}>
-                <Card className="editorial-card transition hover:-translate-y-1">
-                  {event.featuredImageUrl ? (
-                    <div className="relative aspect-[16/10]">
-                      <Image src={event.featuredImageUrl} alt={event.title} fill className="object-cover" sizes="400px" />
-                    </div>
-                  ) : null}
-                  <div className="p-5">
-                    <Badge>events</Badge>
-                    <p className="mt-2 text-xs text-accent uppercase">{formatDate(event.startsAt)}</p>
-                    <h2 className="mt-2 font-display text-xl text-brand">{event.title}</h2>
-                    <p className="mt-2 text-sm text-muted">
-                      {event.isOnline ? "Online" : [event.venueName, event.city, event.country].filter(Boolean).join(" · ")}
-                    </p>
-                  </div>
-                </Card>
-              </Link>
+              <MediaCard key={event.id} href={`/events/${event.slug}`} imageUrl={event.featuredImageUrl} imageAlt={event.title}>
+                <Badge>events</Badge>
+                <p className="mt-1 text-[10px] text-accent uppercase sm:mt-2 sm:text-xs">{formatDate(event.startsAt)}</p>
+                <h2 className="mt-1 font-display text-sm text-brand sm:mt-2 sm:text-xl">{event.title}</h2>
+                <p className="mt-1 text-xs text-muted sm:mt-2 sm:text-sm">
+                  {event.isOnline ? "Online" : [event.venueName, event.city, event.country].filter(Boolean).join(" · ")}
+                </p>
+              </MediaCard>
             ))}
           </div>
         </Section>
       ) : null}
       <Section>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 md:gap-6 lg:grid-cols-3">
           {stories.map((story) => (
-            <Link key={story.id} href={`/stories/${story.slug}`}>
-              <Card className="editorial-card transition hover:-translate-y-1">
-                {story.featuredImageUrl ? (
-                  <div className="relative aspect-[16/10]">
-                    <Image src={story.featuredImageUrl} alt={story.title} fill className="object-cover" sizes="400px" />
-                  </div>
-                ) : null}
-                <div className="p-5">
-                  <Badge>{story.category.replaceAll("_", " ")}</Badge>
-                  <h2 className="mt-3 font-display text-xl text-brand">{story.title}</h2>
-                  <p className="mt-2 text-sm text-muted">{story.excerpt}</p>
-                </div>
-              </Card>
-            </Link>
+            <MediaCard key={story.id} href={`/stories/${story.slug}`} imageUrl={story.featuredImageUrl} imageAlt={story.title}>
+              <Badge>{story.category.replaceAll("_", " ")}</Badge>
+              <h2 className="mt-1.5 font-display text-sm text-brand sm:mt-3 sm:text-xl">{story.title}</h2>
+              <p className="mt-1 text-xs text-muted sm:mt-2 sm:text-sm">{story.excerpt}</p>
+            </MediaCard>
           ))}
         </div>
       </Section>

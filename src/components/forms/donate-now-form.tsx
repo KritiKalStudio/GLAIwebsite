@@ -28,11 +28,11 @@ export function DonateNowForm({
 
   return (
     <div className="mt-8">
-      <Button type="button" variant="sunshine" className="min-h-11 w-full sm:w-auto" onClick={() => setOpen((value) => !value)}>
+      <Button type="button" variant="sunshine" className="w-full sm:w-auto" onClick={() => setOpen((value) => !value)}>
         {open ? "Close donation form" : "Donate now"}
       </Button>
       {open ? (
-        <form action={createProgramDonation} className="mt-6 grid gap-5 rounded-2xl border border-brand/10 bg-paper p-4 sm:p-6">
+        <form action={createProgramDonation} className="mt-6 grid gap-4 rounded-lg border border-brand/10 bg-paper p-4 sm:gap-5 sm:rounded-2xl sm:p-6">
           <input type="hidden" name="programSlug" value={programSlug} />
           <fieldset>
             <legend className="text-sm font-semibold">Amount</legend>
@@ -133,7 +133,7 @@ export function DonateNowForm({
           ) : (
             <p className="text-sm text-muted">A bank account has not been published yet. Choose another method or check back shortly.</p>
           )}
-          <Button type="submit" className="min-h-11 w-full sm:w-auto">
+          <Button type="submit" className="w-full sm:w-auto">
             Confirm donation
           </Button>
         </form>
