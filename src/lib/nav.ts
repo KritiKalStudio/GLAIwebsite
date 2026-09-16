@@ -24,11 +24,10 @@ export function rewriteNavHrefs(items: NavItem[]): NavItem[] {
 const REQUIRED: NavItem[] = [
   { label: "Stories & News", href: "/stories" },
   { label: "Podcast", href: "/podcast" },
-  { label: "Sponsor a project", href: "/sponsor-a-project" },
 ];
 
 const PRIMARY_ORDER = ["/", "/about", "/our-work", "/stories", "/podcast"];
-const EXPLORE_ORDER = ["/impact", "/love-ambassadors", "/get-involved", "/resources", "/sponsor-a-project"];
+const EXPLORE_ORDER = ["/impact", "/love-ambassadors", "/get-involved", "/resources"];
 
 function pick(items: NavItem[], hrefs: string[]) {
   const byHref = new Map(items.map((item) => [item.href, item]));

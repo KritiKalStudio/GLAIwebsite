@@ -52,18 +52,24 @@ export async function Header() {
             </Link>
           ))}
           {exploreNav.length ? (
-            <details className="group relative">
-              <summary className="cursor-pointer list-none text-[13px] font-semibold text-ink/75 marker:hidden hover:text-brand">
+            <div className="group relative">
+              <span className="inline-flex cursor-default items-center text-[13px] font-semibold text-ink/75 group-hover:text-brand">
                 Explore <span className="ml-1 text-accent">+</span>
-              </summary>
-              <div className="absolute right-0 top-8 grid w-52 gap-1 rounded-xl border border-brand/10 bg-paper p-2 shadow-xl">
-                {exploreNav.map((item) => (
-                  <Link key={item.href} href={item.href} className="rounded-lg px-3 py-2 text-sm font-medium text-ink/80 hover:bg-mist hover:text-brand">
-                    {item.label}
-                  </Link>
-                ))}
+              </span>
+              <div className="pointer-events-none invisible absolute right-0 top-0 z-50 w-52 pt-8 opacity-0 group-hover:pointer-events-auto group-hover:visible group-hover:opacity-100">
+                <div className="grid gap-1 rounded-xl border border-brand/10 bg-paper p-2 shadow-xl">
+                  {exploreNav.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="rounded-lg px-3 py-2 text-sm font-medium text-ink/80 hover:bg-mist hover:text-brand"
+                    >
+                      {item.label}
+                    </Link>
+                  ))}
+                </div>
               </div>
-            </details>
+            </div>
           ) : null}
         </nav>
         <div className="hidden items-center gap-3 xl:flex">

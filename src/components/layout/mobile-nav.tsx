@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { Menu, X } from "lucide-react";
 import { ButtonLink } from "@/components/ui/button";
 import { LanguageSwitcher } from "@/components/layout/language-switcher";
@@ -27,18 +28,33 @@ export function MobileNav({
   locale: string;
 }) {
   const [open, setOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") setOpen(false);
     };
+    const onPointerDown = (event: PointerEvent) => {
+      if (!rootRef.current?.contains(event.target as Node)) setOpen(false);
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.removeEventListener("pointerdown", onPointerDown);
+    };
   }, [open]);
 
+  const close = () => setOpen(false);
+
   return (
-    <div className="xl:hidden">
+    <div className="xl:hidden" ref={rootRef}>
       <button
         type="button"
         className="btn btn-flat rounded-md p-2 text-brand shadow-none"
@@ -53,6 +69,9 @@ export function MobileNav({
         <div
           id="mobile-nav"
           className="absolute inset-x-0 top-full border-b border-brand/10 bg-canvas px-4 py-3 shadow-lg"
+          onClick={(event) => {
+            if ((event.target as HTMLElement).closest("a")) close();
+          }}
         >
           <nav className="flex flex-col gap-1.5" aria-label="Mobile">
             {primaryItems.map((item) => (
@@ -60,7 +79,7 @@ export function MobileNav({
                 key={item.href}
                 href={item.href}
                 className="rounded-md px-1 py-1.5 text-sm font-medium text-ink"
-                onClick={() => setOpen(false)}
+                onClick={close}
               >
                 {item.label}
               </Link>
@@ -74,7 +93,7 @@ export function MobileNav({
                       key={item.href}
                       href={item.href}
                       className="rounded-md px-1 py-1.5 text-sm font-medium text-ink"
-                      onClick={() => setOpen(false)}
+                      onClick={close}
                     >
                       {item.label}
                     </Link>

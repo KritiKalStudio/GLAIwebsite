@@ -20,7 +20,6 @@ import {
   projects,
   roles,
   siteSettings,
-  sponsorTiers,
   stories,
   trainingModules,
   users,
@@ -866,40 +865,6 @@ Replace this sample with the live 2026 campaign brief.`,
       },
     ])
     .onConflictDoNothing({ target: campaigns.slug });
-
-  const campaignRows = await db.select().from(campaigns);
-  const general = campaignRows.find((row) => row.slug === "general-fund");
-  if (general) {
-    await db
-      .insert(sponsorTiers)
-      .values([
-        {
-          campaignId: general.id,
-          name: "Friend",
-          amount: "25000",
-          currency: "NGN",
-          benefits: "Named in the annual supporters list (optional).",
-          sortOrder: 1,
-        },
-        {
-          campaignId: general.id,
-          name: "Partner",
-          amount: "250000",
-          currency: "NGN",
-          benefits: "Program briefing and optional site visit coordination.",
-          sortOrder: 2,
-        },
-        {
-          campaignId: general.id,
-          name: "Institutional",
-          amount: "2500000",
-          currency: "NGN",
-          benefits: "Structured partnership conversation with leadership.",
-          sortOrder: 3,
-        },
-      ])
-      .onConflictDoNothing();
-  }
 
   await db
     .insert(volunteerOpportunities)

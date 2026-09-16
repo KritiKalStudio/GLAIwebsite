@@ -1,6 +1,5 @@
 import { relations } from "drizzle-orm";
 import {
-  integer,
   numeric,
   pgTable,
   text,
@@ -39,18 +38,6 @@ export const campaigns = pgTable("campaigns", {
   updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
     .notNull()
     .defaultNow(),
-});
-
-export const sponsorTiers = pgTable("sponsor_tiers", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  campaignId: uuid("campaign_id").references(() => campaigns.id, {
-    onDelete: "set null",
-  }),
-  name: text("name").notNull(),
-  amount: numeric("amount", { precision: 14, scale: 2 }).notNull(),
-  currency: text("currency").notNull().default("NGN"),
-  benefits: text("benefits").notNull(),
-  sortOrder: integer("sort_order").notNull().default(0),
 });
 
 export const donations = pgTable("donations", {
@@ -113,14 +100,6 @@ export const campaignsRelations = relations(campaigns, ({ one, many }) => ({
     references: [projects.id],
   }),
   donations: many(donations),
-  tiers: many(sponsorTiers),
-}));
-
-export const sponsorTiersRelations = relations(sponsorTiers, ({ one }) => ({
-  campaign: one(campaigns, {
-    fields: [sponsorTiers.campaignId],
-    references: [campaigns.id],
-  }),
 }));
 
 export const donationsRelations = relations(donations, ({ one, many }) => ({
