@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Kicker, Section } from "@/components/blocks/section";
+import { AmbassadorDirectoryTable } from "@/components/network-directory";
 import { getCountryCounts, getDirectoryAmbassadors } from "@/lib/content/ambassadors";
 import { getProjectsByCountry } from "@/lib/content/programs";
 
@@ -27,16 +28,9 @@ export default async function CountryNetworkPage({
       <p className="mt-3 text-muted">
         {summary.total} approved ambassadors counted. {directory.length} appear by name with consent.
       </p>
-      <ul className="mt-8 space-y-3">
-        {directory.map((person) => (
-          <li key={person.id} className="rounded-md border border-brand/10 bg-paper p-4">
-            <p className="font-semibold">{person.fullName}</p>
-            <p className="text-sm text-muted">
-              {person.region} {person.profession ? `· ${person.profession}` : ""}
-            </p>
-          </li>
-        ))}
-      </ul>
+      <div className="mt-8">
+        <AmbassadorDirectoryTable rows={directory} showCountry={false} />
+      </div>
       {projects.length ? (
         <>
           <h2 className="mt-12 font-display text-2xl">Projects in this country</h2>

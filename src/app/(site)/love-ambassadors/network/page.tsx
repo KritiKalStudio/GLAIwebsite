@@ -1,8 +1,7 @@
-import Link from "next/link";
 import { Kicker, Section } from "@/components/blocks/section";
-import { Card } from "@/components/ui/card";
-import { getCountryCounts, getDirectoryAmbassadors } from "@/lib/content/ambassadors";
+import { AmbassadorDirectoryTable, CountryCountsTable } from "@/components/network-directory";
 import { NetworkMap } from "@/components/network-map";
+import { getCountryCounts, getDirectoryAmbassadors } from "@/lib/content/ambassadors";
 import { optionalEnv } from "@/lib/env";
 
 
@@ -29,30 +28,20 @@ export default async function NetworkPage() {
       </Section>
       <Section>
         <NetworkMap counts={counts} token={token} />
-        <div className="mt-6 grid grid-cols-2 gap-2 sm:mt-10 sm:gap-4 lg:grid-cols-3">
-          {counts.map((row) => (
-            <Link key={row.countryCode} href={`/love-ambassadors/network/${row.countryCode}`}>
-              <Card className="group p-3 sm:p-5">
-                <p className="text-xs text-muted sm:text-sm">{row.country}</p>
-                <p className="mt-1 font-display text-2xl text-brand sm:mt-2 sm:text-4xl">{row.total}</p>
-                <p className="mt-1 text-[10px] font-semibold tracking-wide text-accent uppercase sm:text-xs">Explore country network →</p>
-              </Card>
-            </Link>
-          ))}
+        <h2 className="editorial-rule mt-10 font-display text-2xl sm:mt-16 sm:text-3xl">Ambassadors by country</h2>
+        <p className="mt-2 max-w-2xl text-sm text-muted">
+          Totals include every approved ambassador. Open a country to see its consenting public profiles.
+        </p>
+        <div className="mt-4">
+          <CountryCountsTable rows={counts} />
         </div>
-        <h2 className="editorial-rule mt-10 font-display text-2xl sm:mt-20 sm:text-3xl">Meet consenting ambassadors</h2>
-        <ul className="mt-4 grid gap-2 md:grid-cols-2 md:gap-3">
-          {directory.map((person) => (
-            <li key={person.id} className="rounded-md border border-brand/10 bg-paper p-3 sm:rounded-lg sm:p-5 sm:shadow-sm">
-              <p className="font-semibold">{person.fullName}</p>
-              <p className="text-sm text-muted">
-                {person.region ? `${person.region}, ` : ""}
-                {person.country}
-                {person.profession ? ` · ${person.profession}` : ""}
-              </p>
-            </li>
-          ))}
-        </ul>
+        <h2 className="editorial-rule mt-10 font-display text-2xl sm:mt-16 sm:text-3xl">Meet consenting ambassadors</h2>
+        <p className="mt-2 max-w-2xl text-sm text-muted">
+          Named profiles appear only when an ambassador has opted in from their dashboard.
+        </p>
+        <div className="mt-4">
+          <AmbassadorDirectoryTable rows={directory} />
+        </div>
       </Section>
     </>
   );
