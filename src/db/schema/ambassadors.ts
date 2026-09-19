@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import {
   boolean,
+  index,
   integer,
   jsonb,
   pgTable,
@@ -20,6 +21,8 @@ export type SignupPayload = {
   country: string;
   stateOfOrigin: string;
   localGovernment: string;
+  electoralWard: string | null;
+  pollingUnit: string | null;
   currentAddress: string;
   nationality: string;
   tribe: string;
@@ -30,53 +33,68 @@ export type SignupPayload = {
   otpChannel: "whatsapp" | "email";
 };
 
-export const ambassadors = pgTable("ambassadors", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
-  fullName: text("full_name").notNull(),
-  email: text("email").notNull().unique(),
-  phone: text("phone"),
-  whatsapp: text("whatsapp"),
-  age: integer("age"),
-  stateOfOrigin: text("state_of_origin"),
-  localGovernment: text("local_government"),
-  currentAddress: text("current_address"),
-  nationality: text("nationality"),
-  tribe: text("tribe"),
-  religion: text("religion"),
-  education: text("education"),
-  occupation: text("occupation"),
-  organization: text("organization"),
-  country: text("country").notNull(),
-  countryCode: text("country_code").notNull(),
-  region: text("region"),
-  profession: text("profession"),
-  areasOfInterest: jsonb("areas_of_interest").$type<string[]>().notNull().default([]),
-  whyJoin: text("why_join").notNull().default(""),
-  volunteerInterests: jsonb("volunteer_interests")
-    .$type<string[]>()
-    .notNull()
-    .default([]),
-  photoUrl: text("photo_url"),
-  status: ambassadorStatusEnum("status").notNull().default("active"),
-  consentToDirectory: boolean("consent_to_directory").notNull().default(false),
-  principlesAgreedAt: timestamp("principles_agreed_at", {
-    withTimezone: true,
-    mode: "date",
-  }),
-  contributions: text("contributions"),
-  reviewedAt: timestamp("reviewed_at", { withTimezone: true, mode: "date" }),
-  reviewedById: uuid("reviewed_by_id").references(() => users.id, {
-    onDelete: "set null",
-  }),
-  reviewNotes: text("review_notes"),
-  createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
-    .notNull()
-    .defaultNow(),
-});
+export const ambassadors = pgTable(
+  "ambassadors",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    fullName: text("full_name").notNull(),
+    email: text("email").notNull().unique(),
+    phone: text("phone"),
+    whatsapp: text("whatsapp"),
+    age: integer("age"),
+    stateOfOrigin: text("state_of_origin"),
+    localGovernment: text("local_government"),
+    geoPoliticalZone: text("geo_political_zone"),
+    electoralWard: text("electoral_ward"),
+    pollingUnit: text("polling_unit"),
+    currentAddress: text("current_address"),
+    nationality: text("nationality"),
+    tribe: text("tribe"),
+    religion: text("religion"),
+    education: text("education"),
+    occupation: text("occupation"),
+    organization: text("organization"),
+    country: text("country").notNull(),
+    countryCode: text("country_code").notNull(),
+    region: text("region"),
+    profession: text("profession"),
+    areasOfInterest: jsonb("areas_of_interest").$type<string[]>().notNull().default([]),
+    whyJoin: text("why_join").notNull().default(""),
+    volunteerInterests: jsonb("volunteer_interests")
+      .$type<string[]>()
+      .notNull()
+      .default([]),
+    photoUrl: text("photo_url"),
+    status: ambassadorStatusEnum("status").notNull().default("active"),
+    consentToDirectory: boolean("consent_to_directory").notNull().default(false),
+    principlesAgreedAt: timestamp("principles_agreed_at", {
+      withTimezone: true,
+      mode: "date",
+    }),
+    contributions: text("contributions"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true, mode: "date" }),
+    reviewedById: uuid("reviewed_by_id").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    reviewNotes: text("review_notes"),
+    createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true, mode: "date" })
+      .notNull()
+      .defaultNow(),
+  },
+  (table) => [
+    index("ambassadors_country_code_idx").on(table.countryCode),
+    index("ambassadors_place_idx").on(
+      table.countryCode,
+      table.geoPoliticalZone,
+      table.stateOfOrigin,
+      table.localGovernment,
+    ),
+  ],
+);
 
 export const trainingModules = pgTable("training_modules", {
   id: uuid("id").primaryKey().defaultRandom(),

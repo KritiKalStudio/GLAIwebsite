@@ -14,6 +14,7 @@
     "db:push": "drizzle-kit push",
     "db:studio": "drizzle-kit studio",
     "db:seed": "tsx src/db/seed.ts",
+    "db:seed-locations": "tsx scripts/seed-nigeria-locations.ts",
     "db:backup": "tsx scripts/backup.ts",
     "db:restore-check": "tsx scripts/restore-check.ts",
     "e2e:smoke": "tsx scripts/e2e-smoke.ts"

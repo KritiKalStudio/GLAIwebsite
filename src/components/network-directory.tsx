@@ -55,6 +55,56 @@ export function CountryCountsTable({ rows }: { rows: CountryCountRow[] }) {
   );
 }
 
+export function PlaceCountsTable({
+  rows,
+  empty,
+  summaryNoun,
+  filterPlaceholder,
+}: {
+  rows: { name: string; slug: string; total: number; href: string }[];
+  empty: string;
+  summaryNoun: string;
+  filterPlaceholder: string;
+}) {
+  const sorted = [...rows].sort((a, b) => {
+    const byTotal = Number(b.total) - Number(a.total);
+    if (byTotal) return byTotal;
+    return a.name.localeCompare(b.name);
+  });
+
+  return (
+    <PaginatedTable
+      rows={sorted}
+      rowKey={(row) => row.slug}
+      summaryNoun={summaryNoun}
+      empty={empty}
+      filterPlaceholder={filterPlaceholder}
+      matches={(row, query) => includesQuery(row.name, query)}
+      pageSize={20}
+      columns={[
+        {
+          header: "Place",
+          cell: (row) =>
+            row.total > 0 ? (
+              <Link href={row.href} className="font-medium text-brand hover:underline">
+                {row.name}
+              </Link>
+            ) : (
+              <Link href={row.href} className="text-muted hover:underline">
+                {row.name}
+              </Link>
+            ),
+        },
+        {
+          header: "Ambassadors",
+          className: "w-32 text-right tabular-nums",
+          cell: (row) => Number(row.total),
+        },
+      ]}
+    />
+  );
+}
+
 export function AmbassadorDirectoryTable({
   rows,
   showCountry = true,

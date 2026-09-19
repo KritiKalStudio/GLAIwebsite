@@ -49,6 +49,10 @@ AGENTS.md
 CLAUDE.md
 PROGRESS.md
 
+# INEC gazetteer downloads (seed from GitHub or local cache)
+/tmp-inec
+/data/inec
+
 # Local design references and source exports (the deployed assets remain in public/)
 GLAI_Website_Design_Specification.docx
 logo_and_brand_package.png

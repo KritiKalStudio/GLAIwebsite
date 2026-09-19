@@ -308,3 +308,209 @@ export function isNigeriaPlace(value: string | null | undefined) {
   const normalized = value.trim().toLowerCase();
   return normalized === "nigeria" || normalized === "ng" || normalized === "nigerian";
 }
+
+export const GEO_POLITICAL_ZONES = [
+  "North Central",
+  "North East",
+  "North West",
+  "South East",
+  "South South",
+  "South West",
+] as const;
+
+export type GeoPoliticalZone = (typeof GEO_POLITICAL_ZONES)[number];
+
+const STATE_TO_ZONE: Record<string, GeoPoliticalZone> = {
+  Benue: "North Central",
+  Kogi: "North Central",
+  Kwara: "North Central",
+  Nasarawa: "North Central",
+  Niger: "North Central",
+  Plateau: "North Central",
+  FCT: "North Central",
+  Adamawa: "North East",
+  Bauchi: "North East",
+  Borno: "North East",
+  Gombe: "North East",
+  Taraba: "North East",
+  Yobe: "North East",
+  Jigawa: "North West",
+  Kaduna: "North West",
+  Kano: "North West",
+  Katsina: "North West",
+  Kebbi: "North West",
+  Sokoto: "North West",
+  Zamfara: "North West",
+  Abia: "South East",
+  Anambra: "South East",
+  Ebonyi: "South East",
+  Enugu: "South East",
+  Imo: "South East",
+  "Akwa Ibom": "South South",
+  Bayelsa: "South South",
+  "Cross River": "South South",
+  Delta: "South South",
+  Edo: "South South",
+  Rivers: "South South",
+  Ekiti: "South West",
+  Lagos: "South West",
+  Ogun: "South West",
+  Ondo: "South West",
+  Osun: "South West",
+  Oyo: "South West",
+};
+
+const STATE_ALIASES: Record<string, string> = {
+  abuja: "FCT",
+  "fct abuja": "FCT",
+  "federal capital territory": "FCT",
+  nassarawa: "Nasarawa",
+};
+
+/** INEC gazetteer spellings that do not collapse onto the canonical LGA list. */
+const LGA_ALIASES: Record<string, Record<string, string>> = {
+  Adamawa: { "gire 1": "Girei" },
+  Anambra: { ihala: "Ihiala" },
+  Bauchi: { dambam: "Damban" },
+  Edo: { uhunmwode: "Uhunmwonde" },
+  Gombe: { "yalmaltu deba": "Yamaltu/Deba" },
+  Jigawa: { birniwa: "Biriniwa", "kirika samma": "Kiri Kasama" },
+  Kano: { danbata: "Dambatta", "dawaki kudu": "Dawakin Kudu", "garun malam": "Garun Mallam" },
+  Katsina: { malufashi: "Malumfashi" },
+  Kebbi: { aliero: "Aleiro" },
+  Kogi: { "mopa moro": "Mopa-Muro", "ogori mangogo": "Ogori/Magongo" },
+  Kwara: { patigi: "Pategi" },
+  Lagos: { "ifako ijaye": "Ifako-Ijaiye", somolu: "Shomolu" },
+  Niger: { edatti: "Edati", munya: "Moya" },
+  Ogun: { "ogun water side": "Ogun Waterside" },
+  Sokoto: { "s birni": "Sabon Birni" },
+};
+
+export function zoneForState(state: string | null | undefined): GeoPoliticalZone | null {
+  if (!state || state === NOT_APPLICABLE) return null;
+  const canonical = canonicalStateName(state);
+  return canonical ? (STATE_TO_ZONE[canonical] ?? null) : null;
+}
+
+export function statesInZone(zone: string): string[] {
+  return NIGERIA_STATES.filter((row) => STATE_TO_ZONE[row.name] === zone).map((row) => row.name);
+}
+
+export function slugifyPlace(name: string) {
+  return name
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function findBySlug<T extends { name: string }>(items: T[], slug: string) {
+  return items.find((item) => slugifyPlace(item.name) === slug) ?? null;
+}
+
+export function findStateBySlug(slug: string) {
+  return NIGERIA_STATES.find((row) => slugifyPlace(row.name) === slug) ?? null;
+}
+
+export function findLgaBySlug(state: string, slug: string) {
+  return lgasForState(state).find((name) => slugifyPlace(name) === slug) ?? null;
+}
+
+export function zoneFromSlug(slug: string): GeoPoliticalZone | null {
+  return GEO_POLITICAL_ZONES.find((zone) => slugifyPlace(zone) === slug) ?? null;
+}
+
+export function normalizePlace(value: string) {
+  return value
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\b(state|lga|ward|ps|area council|municipal council)\b/g, " ")
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+export function titleCasePlace(value: string): string {
+  const small = new Set(["of", "and", "the", "by", "at", "in", "on", "de"]);
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((word, index) => {
+      if (!word) return word;
+      if (/^i{1,3}$|^iv$|^vi{0,3}$|^ix$|^x+$/i.test(word)) return word.toUpperCase();
+      if (word.includes("/")) return word.split("/").map((part) => titleCasePlace(part)).join("/");
+      if (word.includes("-")) return word.split("-").map((part) => titleCasePlace(part)).join("-");
+      const lower = word.toLowerCase();
+      if (index > 0 && small.has(lower)) return lower;
+      return lower.charAt(0).toUpperCase() + lower.slice(1);
+    })
+    .join(" ");
+}
+
+function compactPlace(value: string) {
+  return normalizePlace(value).replace(/ /g, "");
+}
+
+function editDistance(a: string, b: string) {
+  if (a === b) return 0;
+  if (Math.abs(a.length - b.length) > 2) return 99;
+  const rows = a.length + 1;
+  const cols = b.length + 1;
+  const grid = Array.from({ length: rows }, () => new Array<number>(cols).fill(0));
+  for (let i = 0; i < rows; i += 1) grid[i][0] = i;
+  for (let j = 0; j < cols; j += 1) grid[0][j] = j;
+  for (let i = 1; i < rows; i += 1) {
+    for (let j = 1; j < cols; j += 1) {
+      const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+      grid[i][j] = Math.min(grid[i - 1][j] + 1, grid[i][j - 1] + 1, grid[i - 1][j - 1] + cost);
+    }
+  }
+  return grid[a.length][b.length];
+}
+
+export function matchListedName(query: string, listed: string[]): string | null {
+  const needle = normalizePlace(query);
+  if (!needle) return null;
+  const exact = listed.find((item) => normalizePlace(item) === needle);
+  if (exact) return exact;
+  const compactNeedle = compactPlace(query);
+  const compactExact = listed.filter((item) => compactPlace(item) === compactNeedle);
+  if (compactExact.length === 1) return compactExact[0];
+  const prefixed = listed.filter((item) => {
+    const hay = normalizePlace(item);
+    return hay.startsWith(needle) || needle.startsWith(hay);
+  });
+  if (prefixed.length === 1) return prefixed[0];
+  const tokens = needle.split(" ");
+  const tokenHits = listed.filter((item) => {
+    const hayTokens = normalizePlace(item).split(" ");
+    const haySet = new Set(hayTokens);
+    const needleSet = new Set(tokens);
+    return tokens.every((token) => haySet.has(token)) || hayTokens.every((token) => needleSet.has(token));
+  });
+  if (tokenHits.length === 1) return tokenHits[0];
+  const close = listed.filter((item) => editDistance(compactPlace(item), compactNeedle) === 1);
+  if (close.length === 1) return close[0];
+  return prefixed[0] ?? compactExact[0] ?? null;
+}
+
+export function canonicalStateName(value: string): string | null {
+  const aliased = STATE_ALIASES[normalizePlace(value)];
+  if (aliased) return aliased;
+  return matchListedName(value, NIGERIA_STATES.map((row) => row.name));
+}
+
+export function canonicalLgaName(state: string, lga: string): string | null {
+  const canonicalState = canonicalStateName(state);
+  if (!canonicalState) return null;
+  const aliased = LGA_ALIASES[canonicalState]?.[normalizePlace(lga)];
+  if (aliased) return aliased;
+  return matchListedName(lga, lgasForState(canonicalState));
+}
+
+export function isNigerianState(state: string | null | undefined) {
+  return Boolean(state && state !== NOT_APPLICABLE && canonicalStateName(state));
+}

@@ -19,7 +19,8 @@ import { authenticateWithPassword, safeAdminPath } from "@/lib/primary-admin";
 import { sendSignupCodeEmail, sendTemplatedEmail } from "@/lib/email";
 import { getRequestSiteUrl } from "@/lib/env";
 import { getMailSettings, inboxFor } from "@/lib/mail";
-import { isNigeriaPlace, lgasForState, NOT_APPLICABLE } from "@/lib/nigeria-locations";
+import { resolveMembershipPlace } from "@/lib/nigeria-gazetteer";
+import { isNigeriaPlace, NOT_APPLICABLE, zoneForState } from "@/lib/nigeria-locations";
 import { RELIGION_OPTIONS, resolveReligion } from "@/lib/religions";
 import { assignVolunteerRole } from "@/lib/volunteer-slots";
 import { normalizeWhatsapp, sendWhatsappCode } from "@/lib/whatsapp";
@@ -164,6 +165,8 @@ export async function startSignupAction(
     country: field(formData, "country"),
     stateOfOrigin: field(formData, "stateOfOrigin"),
     localGovernment: field(formData, "localGovernment"),
+    electoralWard: field(formData, "electoralWard") || null,
+    pollingUnit: field(formData, "pollingUnit") || null,
     currentAddress: field(formData, "currentAddress"),
     nationality: field(formData, "nationality"),
     tribe: field(formData, "tribe"),
@@ -179,8 +182,8 @@ export async function startSignupAction(
 
   const missing = Object.entries(payload).filter(([key, value]) => {
     if (key === "age") return !Number.isFinite(payload.age) || payload.age < 13 || payload.age > 120;
-    if (key === "otpChannel") return false;
-    return !String(value).trim();
+    if (key === "otpChannel" || key === "electoralWard" || key === "pollingUnit") return false;
+    return !String(value ?? "").trim();
   });
   if (missing.length) {
     return { error: "Please complete every field on the form." };
@@ -192,10 +195,17 @@ export async function startSignupAction(
   if (field(formData, "religion") && field(formData, "religion") !== "Other" && !(RELIGION_OPTIONS as readonly string[]).includes(field(formData, "religion"))) {
     return { error: "Choose a religion from the list." };
   }
-  const allowedLgas = lgasForState(payload.stateOfOrigin);
-  if (!payload.stateOfOrigin || (payload.stateOfOrigin !== NOT_APPLICABLE && !allowedLgas.includes(payload.localGovernment))) {
-    return { error: "Choose a valid state of origin and local government." };
-  }
+  const place = await resolveMembershipPlace({
+    stateOfOrigin: payload.stateOfOrigin,
+    localGovernment: payload.localGovernment,
+    electoralWard: payload.electoralWard,
+    pollingUnit: payload.pollingUnit,
+  });
+  if (!place.ok) return { error: place.error };
+  payload.stateOfOrigin = place.value.stateOfOrigin;
+  payload.localGovernment = place.value.localGovernment;
+  payload.electoralWard = place.value.electoralWard;
+  payload.pollingUnit = place.value.pollingUnit;
   if (isNigeriaPlace(payload.nationality) && payload.stateOfOrigin === NOT_APPLICABLE) {
     return { error: "Nigerian members should select a state of origin." };
   }
@@ -300,6 +310,9 @@ export async function confirmSignupAction(
     age: payload.age,
     stateOfOrigin: payload.stateOfOrigin,
     localGovernment: payload.localGovernment,
+    geoPoliticalZone: zoneForState(payload.stateOfOrigin),
+    electoralWard: payload.electoralWard,
+    pollingUnit: payload.pollingUnit,
     currentAddress: payload.currentAddress,
     nationality: payload.nationality,
     tribe: payload.tribe,

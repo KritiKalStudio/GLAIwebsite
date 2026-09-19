@@ -14,6 +14,7 @@ import { recordAudit } from "@/lib/audit";
 import { getSessionUser, hashPassword } from "@/lib/auth";
 import { encryptField } from "@/lib/crypto";
 import { COUNTRIES } from "@/lib/countries";
+import { resolveMembershipPlace } from "@/lib/nigeria-gazetteer";
 import { sendTemplatedEmail } from "@/lib/email";
 import { getRequestSiteUrl } from "@/lib/env";
 import { resolveReligion } from "@/lib/religions";
@@ -107,6 +108,13 @@ export async function updateAmbassadorProfile(formData: FormData) {
     (row) => row.name.toLowerCase() === countryName.toLowerCase() || row.code.toLowerCase() === countryName.toLowerCase(),
   );
   const religion = resolveReligion(String(formData.get("religion") ?? ""), String(formData.get("religionOther") ?? ""));
+  const place = await resolveMembershipPlace({
+    stateOfOrigin: String(formData.get("stateOfOrigin") ?? ""),
+    localGovernment: String(formData.get("localGovernment") ?? ""),
+    electoralWard: String(formData.get("electoralWard") ?? ""),
+    pollingUnit: String(formData.get("pollingUnit") ?? ""),
+  });
+  if (!place.ok) return;
   await getDb()
     .update(ambassadors)
     .set({
@@ -114,8 +122,11 @@ export async function updateAmbassadorProfile(formData: FormData) {
       phone: encryptField(String(formData.get("whatsapp") ?? formData.get("phone") ?? "") || null),
       whatsapp: encryptField(String(formData.get("whatsapp") ?? "") || null),
       age: Number(formData.get("age") || 0) || null,
-      stateOfOrigin: String(formData.get("stateOfOrigin") ?? "") || null,
-      localGovernment: String(formData.get("localGovernment") ?? "") || null,
+      stateOfOrigin: place.value.stateOfOrigin || null,
+      localGovernment: place.value.localGovernment || null,
+      geoPoliticalZone: place.value.geoPoliticalZone,
+      electoralWard: place.value.electoralWard,
+      pollingUnit: place.value.pollingUnit,
       currentAddress: String(formData.get("currentAddress") ?? "") || null,
       nationality: String(formData.get("nationality") ?? "") || null,
       tribe: String(formData.get("tribe") ?? "") || null,
@@ -134,7 +145,9 @@ export async function updateAmbassadorProfile(formData: FormData) {
       updatedAt: new Date(),
     })
     .where(eq(ambassadors.id, user.ambassadorId));
+  revalidateContent(CACHE_TAGS.ambassadors);
   revalidatePath("/dashboard");
+  revalidatePath("/love-ambassadors/network");
 }
 
 export async function completeTrainingModule(formData: FormData) {

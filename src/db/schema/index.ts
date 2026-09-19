@@ -6,6 +6,7 @@ export * from "@/db/schema/programs";
 export * from "@/db/schema/stories";
 export * from "@/db/schema/events";
 export * from "@/db/schema/ambassadors";
+export * from "@/db/schema/locations";
 export * from "@/db/schema/donations";
 export * from "@/db/schema/volunteers";
 export * from "@/db/schema/notifications";

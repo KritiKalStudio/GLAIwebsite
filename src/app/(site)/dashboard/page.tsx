@@ -111,6 +111,8 @@ export default async function DashboardPage({
                 country: profile.country,
                 stateOfOrigin: profile.stateOfOrigin ?? "",
                 localGovernment: profile.localGovernment ?? "",
+                electoralWard: profile.electoralWard ?? "",
+                pollingUnit: profile.pollingUnit ?? "",
                 religion: profile.religion ?? "",
               }}
             />
