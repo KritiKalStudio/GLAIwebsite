@@ -1,5 +1,6 @@
 import { relations } from "drizzle-orm";
 import {
+  type AnyPgColumn,
   boolean,
   index,
   integer,
@@ -31,6 +32,7 @@ export type SignupPayload = {
   occupation: string;
   organization: string;
   otpChannel: "whatsapp" | "email";
+  referralCode?: string | null;
 };
 
 export const ambassadors = pgTable(
@@ -78,6 +80,10 @@ export const ambassadors = pgTable(
       onDelete: "set null",
     }),
     reviewNotes: text("review_notes"),
+    referralCode: text("referral_code").unique(),
+    referredById: uuid("referred_by_id").references((): AnyPgColumn => ambassadors.id, {
+      onDelete: "set null",
+    }),
     createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
       .notNull()
       .defaultNow(),
@@ -93,6 +99,7 @@ export const ambassadors = pgTable(
       table.stateOfOrigin,
       table.localGovernment,
     ),
+    index("ambassadors_referred_by_idx").on(table.referredById),
   ],
 );
 
@@ -137,6 +144,12 @@ export const certificates = pgTable("certificates", {
 
 export const ambassadorsRelations = relations(ambassadors, ({ one, many }) => ({
   user: one(users, { fields: [ambassadors.userId], references: [users.id] }),
+  referrer: one(ambassadors, {
+    fields: [ambassadors.referredById],
+    references: [ambassadors.id],
+    relationName: "ambassadorReferrals",
+  }),
+  referrals: many(ambassadors, { relationName: "ambassadorReferrals" }),
   training: many(ambassadorTrainingProgress),
   certificates: many(certificates),
 }));

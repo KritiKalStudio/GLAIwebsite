@@ -324,6 +324,19 @@ async function main() {
     expectContains("dashboard welcome", dash.body, "Welcome,");
     record("dashboard no training modules", !dash.body.includes("Training modules"), "learning modules removed");
     record("dashboard no certificates", !dash.body.includes("Certificates"), "certificates removed");
+    expectContains("dashboard referral link", dash.body, "Your referral link");
+    expectContains("dashboard referral honour", dash.body, "Starter");
+    expectContains("dashboard leaderboard link", dash.body, "/dashboard/leaderboard");
+
+    const leaderboardGate = await request("/dashboard/leaderboard");
+    expectStatus("/dashboard/leaderboard unauthenticated", leaderboardGate.status, [307, 308, 302]);
+    const leaderboard = await request("/dashboard/leaderboard", { cookie: ambassador.cookie });
+    expectStatus("/dashboard/leaderboard authenticated", leaderboard.status, [200]);
+    expectContains("leaderboard heading", leaderboard.body, "Referral leaderboard");
+
+    const signupRef = await request("/signup?ref=not-a-code");
+    expectStatus("/signup with referral", signupRef.status, [200]);
+    expectContains("signup referral field", signupRef.body, 'name="referralCode"');
 
     const ambassadorAdmin = await request("/admin", { cookie: ambassador.cookie });
     record(

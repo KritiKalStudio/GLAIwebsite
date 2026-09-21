@@ -22,6 +22,8 @@ import { getMailSettings, inboxFor } from "@/lib/mail";
 import { resolveMembershipPlace } from "@/lib/nigeria-gazetteer";
 import { isNigeriaPlace, NOT_APPLICABLE, zoneForState } from "@/lib/nigeria-locations";
 import { RELIGION_OPTIONS, resolveReligion } from "@/lib/religions";
+import { normalizeReferralCode } from "@/lib/referral-tiers";
+import { allocateReferralCode, findActiveReferrer } from "@/lib/referrals";
 import { assignVolunteerRole } from "@/lib/volunteer-slots";
 import { normalizeWhatsapp, sendWhatsappCode } from "@/lib/whatsapp";
 import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
@@ -215,6 +217,24 @@ export async function startSignupAction(
   if (password.length < 10) return { error: "Choose a password of at least 10 characters." };
   if (password !== confirm) return { error: "The password confirmation does not match." };
 
+  const typedReferral = field(formData, "referralCode");
+  if (typedReferral) {
+    const normalized = normalizeReferralCode(typedReferral);
+    if (!normalized) {
+      return { error: "Enter a referral code like GLAI-XXXXXX, or leave the field blank." };
+    }
+    const referrer = await findActiveReferrer(normalized);
+    if (!referrer) {
+      return { error: "That referral code was not found. Check it with the member who invited you, or leave the field blank." };
+    }
+    if (referrer.email.toLowerCase() === payload.email) {
+      return { error: "That code belongs to this email address. Leave the field blank to sign up." };
+    }
+    payload.referralCode = referrer.referralCode ?? normalized;
+  } else {
+    payload.referralCode = null;
+  }
+
   const db = getDb();
   const [existingUser] = await db.select({ id: users.id }).from(users).where(eq(users.email, payload.email)).limit(1);
   if (existingUser) {
@@ -290,6 +310,14 @@ export async function confirmSignupAction(
 
   const payload = challenge.payload;
   const { country, countryCode } = countryFromValue(payload.country || payload.nationality);
+  let referredById: string | null = null;
+  if (payload.referralCode) {
+    const referrer = await findActiveReferrer(payload.referralCode);
+    if (referrer && referrer.email.toLowerCase() !== payload.email.toLowerCase()) {
+      referredById = referrer.id;
+    }
+  }
+  const referralCode = await allocateReferralCode();
   const [created] = await db
     .insert(users)
     .values({
@@ -328,6 +356,8 @@ export async function confirmSignupAction(
     status: "active",
     consentToDirectory: false,
     principlesAgreedAt: new Date(),
+    referralCode,
+    referredById,
   });
 
   await db.delete(signupChallenges).where(eq(signupChallenges.id, id));

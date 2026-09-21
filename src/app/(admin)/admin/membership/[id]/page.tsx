@@ -5,6 +5,8 @@ import { ambassadors } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
 import { decryptField } from "@/lib/crypto";
 import { formatDate } from "@/lib/format";
+import { tierForCount } from "@/lib/referral-tiers";
+import { countSuccessfulReferrals, ensureReferralCode } from "@/lib/referrals";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +17,19 @@ export default async function MembershipDetailPage({
 }) {
   await requireAdmin("membership");
   const { id } = await params;
-  const [row] = await getDb().select().from(ambassadors).where(eq(ambassadors.id, id)).limit(1);
+  const db = getDb();
+  const [row] = await db.select().from(ambassadors).where(eq(ambassadors.id, id)).limit(1);
   if (!row) notFound();
+  const referralCode = row.userId && row.status === "active" ? (row.referralCode ?? (await ensureReferralCode(row.id))) : row.referralCode;
+  const referralCount = await countSuccessfulReferrals(row.id);
+  const honour = tierForCount(referralCount);
+  const [referrer] = row.referredById
+    ? await db
+        .select({ fullName: ambassadors.fullName, referralCode: ambassadors.referralCode })
+        .from(ambassadors)
+        .where(eq(ambassadors.id, row.referredById))
+        .limit(1)
+    : [];
 
   const fields: { label: string; value: string }[] = [
     { label: "Email", value: row.email },
@@ -35,6 +48,13 @@ export default async function MembershipDetailPage({
     { label: "Occupation", value: row.occupation || row.profession || "—" },
     { label: "Organization", value: row.organization || "—" },
     { label: "Directory consent", value: row.consentToDirectory ? "Yes — may appear by name" : "No — counted only" },
+    { label: "Referral code", value: referralCode || "—" },
+    {
+      label: "Referred by",
+      value: referrer ? `${referrer.fullName}${referrer.referralCode ? ` (${referrer.referralCode})` : ""}` : "—",
+    },
+    { label: "Successful referrals", value: String(referralCount) },
+    { label: "Referral honour", value: honour?.name ?? "None yet" },
     { label: "Joined", value: formatDate(row.createdAt) },
   ];
 

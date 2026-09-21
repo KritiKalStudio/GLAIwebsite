@@ -7,7 +7,7 @@ import { MembershipPlaceFields } from "@/components/forms/membership-place-field
 import { Button } from "@/components/ui/button";
 import { Field, FormError, TextArea, TextInput } from "@/components/ui/field";
 
-export function SignupForm({ role = "" }: { role?: string }) {
+export function SignupForm({ role = "", referralCode = "" }: { role?: string; referralCode?: string }) {
   const [state, action, pending] = useActionState(startSignupAction, null);
   const [otpChannel, setOtpChannel] = useState<"whatsapp" | "email">("whatsapp");
 
@@ -15,6 +15,17 @@ export function SignupForm({ role = "" }: { role?: string }) {
     <form action={action} className="grid gap-4">
       {role ? <input type="hidden" name="role" value={role} /> : null}
       <FormError message={state?.error} />
+      <Field label="Referral code" name="referralCode" hint="Optional. Use a member's code if someone invited you.">
+        <TextInput
+          id="referralCode"
+          name="referralCode"
+          defaultValue={referralCode}
+          autoCapitalize="characters"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder="GLAI-XXXXXX"
+        />
+      </Field>
       <Field label="Full name" name="fullName">
         <TextInput id="fullName" name="fullName" autoComplete="name" required />
       </Field>
