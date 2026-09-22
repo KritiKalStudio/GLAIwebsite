@@ -12,6 +12,7 @@ import {
   getSessionUser,
   hashPassword,
   hashToken,
+  verifyPassword,
 } from "@/lib/auth";
 import { COUNTRIES } from "@/lib/countries";
 import { encryptField } from "@/lib/crypto";
@@ -133,6 +134,42 @@ export async function resetPasswordAction(
     .set({ passwordHash: await hashPassword(password), updatedAt: new Date() })
     .where(eq(users.id, row.userId));
   await getDb().delete(passwordResetTokens).where(eq(passwordResetTokens.id, row.id));
+  return { ok: true };
+}
+
+export async function changePasswordAction(
+  _prev: { error?: string; ok?: boolean } | null,
+  formData: FormData,
+): Promise<{ error?: string; ok?: boolean }> {
+  const user = await getSessionUser();
+  if (!user) redirect("/login?next=/dashboard/settings");
+  const current = String(formData.get("currentPassword") ?? "");
+  const password = String(formData.get("password") ?? "");
+  const confirm = String(formData.get("confirmPassword") ?? "");
+  if (password.length < 10) {
+    return { error: "Choose a password of at least 10 characters." };
+  }
+  if (password !== confirm) {
+    return { error: "The password confirmation does not match." };
+  }
+  if (current === password) {
+    return { error: "Choose a password that is different from your current one." };
+  }
+  const [row] = await getDb()
+    .select({ passwordHash: users.passwordHash })
+    .from(users)
+    .where(eq(users.id, user.id))
+    .limit(1);
+  if (!row?.passwordHash) {
+    return { error: "This account has no password yet. Use Forgot password to set one." };
+  }
+  if (!(await verifyPassword(current, row.passwordHash))) {
+    return { error: "The current password is not correct." };
+  }
+  await getDb()
+    .update(users)
+    .set({ passwordHash: await hashPassword(password), updatedAt: new Date() })
+    .where(eq(users.id, user.id));
   return { ok: true };
 }
 
@@ -400,7 +437,8 @@ export async function confirmSignupAction(
   }
 
   revalidateContent(CACHE_TAGS.ambassadors, CACHE_TAGS.volunteers);
-  revalidatePath("/dashboard");
-  const next = extra ? `/dashboard?notice=${notice}&suggest=${encodeURIComponent(extra)}` : `/dashboard?notice=${notice}`;
+  revalidatePath("/dashboard", "layout");
+  const dest = notice === "welcome" ? "/dashboard" : "/dashboard/get-involved";
+  const next = extra ? `${dest}?notice=${notice}&suggest=${encodeURIComponent(extra)}` : `${dest}?notice=${notice}`;
   redirect(next);
 }

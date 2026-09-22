@@ -540,7 +540,7 @@ export async function saveOpportunity(formData: FormData) {
   revalidateContent(CACHE_TAGS.volunteers);
   revalidatePath("/admin/volunteers");
   revalidatePath("/get-involved/volunteer");
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 }
 
 export async function saveUser(formData: FormData) {

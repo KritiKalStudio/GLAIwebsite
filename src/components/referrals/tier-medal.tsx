@@ -86,7 +86,7 @@ export function TierMedal({
   const locked = state === "locked";
   const label =
     state === "current"
-      ? `${tier.name}, your current honour, unlocked at ${tier.threshold.toLocaleString()} referrals`
+      ? `${tier.name}, your current badge, unlocked at ${tier.threshold.toLocaleString()} referrals`
       : state === "earned"
         ? `${tier.name} unlocked at ${tier.threshold.toLocaleString()} referrals`
         : `${tier.name}, locked until ${tier.threshold.toLocaleString()} referrals`;
@@ -130,7 +130,7 @@ export function TierMedal({
           {tier.threshold.toLocaleString()} {tier.threshold === 1 ? "person" : "people"}
         </span>
         <span className="mt-1 block text-[10px] font-semibold tracking-wide text-accent uppercase">
-          {state === "current" ? "Your honour" : state === "earned" ? "Unlocked" : "Locked"}
+          {state === "current" ? "Your badge" : state === "earned" ? "Unlocked" : "Locked"}
         </span>
       </figcaption>
     </figure>

@@ -54,7 +54,7 @@ export default async function MembershipDetailPage({
       value: referrer ? `${referrer.fullName}${referrer.referralCode ? ` (${referrer.referralCode})` : ""}` : "—",
     },
     { label: "Successful referrals", value: String(referralCount) },
-    { label: "Referral honour", value: honour?.name ?? "None yet" },
+    { label: "Referral badge", value: honour?.name ?? "None yet" },
     { label: "Joined", value: formatDate(row.createdAt) },
   ];
 

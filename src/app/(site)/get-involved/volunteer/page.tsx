@@ -35,12 +35,15 @@ export default async function VolunteerPage() {
         kicker="Volunteer"
         headline="The work needs people in the room, not only on a list."
         subheadline="Open roles are listed below. Members can apply from their dashboard. Visitors sign up first, and the role is assigned if a slot remains."
-        primary={{ href: user ? "/dashboard" : "/signup", label: user ? "Open dashboard" : "Become a member" }}
+        primary={{
+          href: user ? "/dashboard/get-involved" : "/signup",
+          label: user ? "Open your roles" : "Become a member",
+        }}
       />
       <CopySection heading="How volunteering works">
         <p>
           Each role has a limited number of slots. When you apply, a slot is held for you. You can un-apply at any time
-          from your dashboard, which frees the slot for someone else.
+          from Get involved in your dashboard, which frees the slot for someone else.
         </p>
       </CopySection>
       <Section>

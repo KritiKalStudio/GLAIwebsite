@@ -320,13 +320,43 @@ async function main() {
 
     const dash = await request("/dashboard", { cookie: ambassador.cookie });
     expectStatus("/dashboard authenticated", dash.status, [200]);
-    expectContains("dashboard heading", dash.body, "My space");
     expectContains("dashboard welcome", dash.body, "Welcome,");
+    expectContains("dashboard nav referrals", dash.body, "/dashboard/referrals");
+    expectContains("dashboard nav leaderboard", dash.body, "/dashboard/leaderboard");
+    expectContains("dashboard nav involved", dash.body, "/dashboard/get-involved");
+    expectContains("dashboard nav profile", dash.body, "/dashboard/profile");
+    expectContains("dashboard nav settings", dash.body, "/dashboard/settings");
     record("dashboard no training modules", !dash.body.includes("Training modules"), "learning modules removed");
     record("dashboard no certificates", !dash.body.includes("Certificates"), "certificates removed");
-    expectContains("dashboard referral link", dash.body, "Your referral link");
-    expectContains("dashboard referral honour", dash.body, "Starter");
-    expectContains("dashboard leaderboard link", dash.body, "/dashboard/leaderboard");
+
+    const referrals = await request("/dashboard/referrals", { cookie: ambassador.cookie });
+    expectStatus("/dashboard/referrals authenticated", referrals.status, [200]);
+    expectContains("dashboard referral link", referrals.body, "Your referral link");
+    expectContains("dashboard referral honour", referrals.body, "Starter");
+
+    const profile = await request("/dashboard/profile", { cookie: ambassador.cookie });
+    expectStatus("/dashboard/profile authenticated", profile.status, [200]);
+    expectContains("dashboard save profile", profile.body, "Save profile");
+
+    const involved = await request("/dashboard/get-involved", { cookie: ambassador.cookie });
+    expectStatus("/dashboard/get-involved authenticated", involved.status, [200]);
+    expectContains("dashboard volunteer roles", involved.body, "Volunteer opportunities");
+
+    const settings = await request("/dashboard/settings", { cookie: ambassador.cookie });
+    expectStatus("/dashboard/settings authenticated", settings.status, [200]);
+    expectContains("dashboard current password", settings.body, 'name="currentPassword"');
+    expectContains("dashboard new password", settings.body, 'name="password"');
+
+    for (const path of [
+      "/dashboard/referrals",
+      "/dashboard/leaderboard",
+      "/dashboard/get-involved",
+      "/dashboard/profile",
+      "/dashboard/settings",
+    ]) {
+      const gate = await request(path);
+      expectStatus(`${path} unauthenticated`, gate.status, [307, 308, 302]);
+    }
 
     const leaderboardGate = await request("/dashboard/leaderboard");
     expectStatus("/dashboard/leaderboard unauthenticated", leaderboardGate.status, [307, 308, 302]);

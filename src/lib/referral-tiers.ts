@@ -63,7 +63,7 @@ export const REFERRAL_TIERS = [
     slug: "legend",
     name: "Legend",
     threshold: 1500,
-    tagline: "One thousand five hundred. The highest honour.",
+    tagline: "One thousand five hundred. The highest badge.",
     stops: ["#FFF8E8", "#F0D48A", "#C88A13"] as const,
     ink: "#4A3208",
   },
@@ -100,7 +100,7 @@ export function referralProgress(count: number) {
       next: null,
       ratio: 1,
       remaining: 0,
-      label: `${tier?.name ?? "Legend"} is the highest honour. ${count.toLocaleString()} members have joined with your code.`,
+      label: `${tier?.name ?? "Legend"} is the highest badge. ${count.toLocaleString()} members have joined with your code.`,
     };
   }
   const floor = tier?.threshold ?? 0;

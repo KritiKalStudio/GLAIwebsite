@@ -43,12 +43,12 @@ export async function toggleVolunteerRole(formData: FormData) {
     if (!result.ok) {
       const suggest = result.suggestions.map((item) => item.slug).join(",");
       revalidateContent(CACHE_TAGS.volunteers);
-      redirect(`/dashboard?notice=role-full&suggest=${encodeURIComponent(suggest)}`);
+      redirect(`/dashboard/get-involved?notice=role-full&suggest=${encodeURIComponent(suggest)}`);
     }
   }
 
   revalidateContent(CACHE_TAGS.volunteers);
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/get-involved/volunteer");
   revalidatePath("/admin/volunteers");
 }

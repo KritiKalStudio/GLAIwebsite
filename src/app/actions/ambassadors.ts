@@ -2,6 +2,7 @@
 
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
 import { getDb } from "@/db";
 import {
@@ -96,8 +97,9 @@ export async function toggleDirectoryConsent(formData: FormData) {
     .set({ consentToDirectory: consent, updatedAt: new Date() })
     .where(eq(ambassadors.id, user.ambassadorId));
   revalidateContent(CACHE_TAGS.ambassadors);
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/love-ambassadors/network");
+  redirect("/dashboard/settings?notice=consent");
 }
 
 export async function updateAmbassadorProfile(formData: FormData) {
@@ -146,8 +148,9 @@ export async function updateAmbassadorProfile(formData: FormData) {
     })
     .where(eq(ambassadors.id, user.ambassadorId));
   revalidateContent(CACHE_TAGS.ambassadors);
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
   revalidatePath("/love-ambassadors/network");
+  redirect("/dashboard/profile?notice=saved");
 }
 
 export async function completeTrainingModule(formData: FormData) {
@@ -159,7 +162,7 @@ export async function completeTrainingModule(formData: FormData) {
     .insert(ambassadorTrainingProgress)
     .values({ ambassadorId: user.ambassadorId, moduleId })
     .onConflictDoNothing();
-  revalidatePath("/dashboard");
+  revalidatePath("/dashboard", "layout");
 }
 
 export async function approveAmbassador(formData: FormData) {
