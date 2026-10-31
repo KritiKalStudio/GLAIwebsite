@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState, useState } from "react";
+import { useActionState } from "react";
 import { startSignupAction } from "@/app/actions/auth";
 import { MembershipPlaceFields } from "@/components/forms/membership-place-fields";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,6 @@ import { Field, FormError, TextArea, TextInput } from "@/components/ui/field";
 
 export function SignupForm({ role = "", referralCode = "" }: { role?: string; referralCode?: string }) {
   const [state, action, pending] = useActionState(startSignupAction, null);
-  const [otpChannel, setOtpChannel] = useState<"whatsapp" | "email">("whatsapp");
 
   return (
     <form action={action} className="grid gap-4">
@@ -32,36 +31,9 @@ export function SignupForm({ role = "", referralCode = "" }: { role?: string; re
       <Field label="WhatsApp number" name="whatsapp" hint="Include country code, e.g. +2348012345678">
         <TextInput id="whatsapp" name="whatsapp" type="tel" inputMode="tel" autoComplete="tel" required />
       </Field>
-      <Field label="Email" name="email">
+      <Field label="Email" name="email" hint="We send your 4-digit confirmation code here.">
         <TextInput id="email" name="email" type="email" autoComplete="email" required />
       </Field>
-      <fieldset className="rounded-lg border border-brand/10 bg-mist/50 p-4">
-        <legend className="px-1 text-sm font-semibold">Where should we send your confirmation code?</legend>
-        <div className="mt-2 grid gap-2 sm:grid-cols-2">
-          <label className="flex min-h-11 cursor-pointer items-center rounded-md border border-brand/15 bg-paper px-3 text-sm has-checked:border-brand has-checked:bg-brand has-checked:text-paper">
-            <input
-              type="radio"
-              name="otpChannel"
-              value="whatsapp"
-              className="mr-2"
-              checked={otpChannel === "whatsapp"}
-              onChange={() => setOtpChannel("whatsapp")}
-            />
-            WhatsApp
-          </label>
-          <label className="flex min-h-11 cursor-pointer items-center rounded-md border border-brand/15 bg-paper px-3 text-sm has-checked:border-brand has-checked:bg-brand has-checked:text-paper">
-            <input
-              type="radio"
-              name="otpChannel"
-              value="email"
-              className="mr-2"
-              checked={otpChannel === "email"}
-              onChange={() => setOtpChannel("email")}
-            />
-            Email
-          </label>
-        </div>
-      </fieldset>
       <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Password" name="password" hint="At least 10 characters">
           <TextInput id="password" name="password" type="password" autoComplete="new-password" required minLength={10} />
@@ -99,7 +71,7 @@ export function SignupForm({ role = "", referralCode = "" }: { role?: string; re
         </Field>
       </div>
       <Button type="submit" disabled={pending} className="w-full sm:w-auto">
-        {pending ? "Sending code…" : otpChannel === "email" ? "Continue to email confirmation" : "Continue to WhatsApp confirmation"}
+        {pending ? "Sending code…" : "Continue to email confirmation"}
       </Button>
       <p className="text-sm text-muted">
         Already have an account?{" "}

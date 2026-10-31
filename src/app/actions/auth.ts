@@ -26,7 +26,7 @@ import { RELIGION_OPTIONS, resolveReligion } from "@/lib/religions";
 import { normalizeReferralCode } from "@/lib/referral-tiers";
 import { allocateReferralCode, findActiveReferrer } from "@/lib/referrals";
 import { assignVolunteerRole } from "@/lib/volunteer-slots";
-import { normalizeWhatsapp, sendWhatsappCode } from "@/lib/whatsapp";
+import { normalizeWhatsapp } from "@/lib/whatsapp";
 import { CACHE_TAGS, revalidateContent } from "@/lib/cache";
 import { revalidatePath } from "next/cache";
 
@@ -194,7 +194,7 @@ export async function startSignupAction(
   _prev: { error?: string } | null,
   formData: FormData,
 ): Promise<{ error?: string }> {
-  const otpChannel = field(formData, "otpChannel") === "email" ? "email" : "whatsapp";
+  const otpChannel = "email" as const;
   const religion = resolveReligion(field(formData, "religion"), field(formData, "religionOther"));
   const payload: SignupPayload = {
     fullName: field(formData, "fullName"),
@@ -302,19 +302,12 @@ export async function startSignupAction(
 
   let hint = "";
   try {
-    if (otpChannel === "email") {
-      const result = await sendSignupCodeEmail(payload.email, code, payload.fullName);
-      if (result.sandbox) hint = code;
-    } else {
-      const result = await sendWhatsappCode(whatsapp, code);
-      if (result.skipped) hint = code;
-    }
+    const result = await sendSignupCodeEmail(payload.email, code, payload.fullName);
+    if (result.sandbox) hint = code;
   } catch (error) {
-    const fallback =
-      otpChannel === "email"
-        ? "Could not send the email code. Check the address and try again, or choose WhatsApp."
-        : "Could not send the WhatsApp code. Check the number and try again, or choose email.";
-    return { error: error instanceof Error ? error.message : fallback };
+    return {
+      error: error instanceof Error ? error.message : "Could not send the email code. Check the address and try again.",
+    };
   }
 
   const confirmUrl = new URL("/signup/confirm", "http://placeholder.local");

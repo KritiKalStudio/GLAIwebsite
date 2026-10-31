@@ -30,7 +30,7 @@ export default function LoveAmbassadorsPage() {
       </CopySection>
       <CopySection heading="Principles, training, and recognition">
         <p>
-          Sign up, confirm your WhatsApp number, and your membership dashboard opens immediately. There is no
+          Sign up, confirm the code we email you, and your membership dashboard opens immediately. There is no
           application review in between. From the dashboard you can take volunteer roles, follow active campaigns, and
           see upcoming events.
         </p>

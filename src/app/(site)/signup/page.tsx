@@ -26,8 +26,7 @@ export default async function SignupPage({
     <AuthPanel className="max-w-lg">
       <h1 className="text-center font-display text-2xl sm:text-4xl">Create your membership</h1>
       <p className="mt-3 text-center text-sm leading-relaxed text-muted">
-        Choose whether to receive your 4-digit confirmation code by WhatsApp or email. Confirm it and you are signed in
-        — no review wait.
+        We email you a 4-digit confirmation code. Confirm it and you are signed in — no review wait.
       </p>
       {selected ? (
         <p className="mt-4 rounded-lg bg-mist px-3 py-2 text-center text-sm">

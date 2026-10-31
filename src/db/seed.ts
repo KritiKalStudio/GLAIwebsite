@@ -1525,7 +1525,7 @@ Replace this sample with the live 2026 campaign brief.`,
           type: "rich_text",
           data: {
             heading: "Principles, training, and recognition",
-            body: "Sign up, confirm your WhatsApp number, and your membership dashboard opens immediately. There is no application review in between. From the dashboard you can take volunteer roles, follow active campaigns, and see upcoming events.",
+            body: "Sign up, confirm the code we email you, and your membership dashboard opens immediately. There is no application review in between. From the dashboard you can take volunteer roles, follow active campaigns, and see upcoming events.",
           },
         },
       ],
