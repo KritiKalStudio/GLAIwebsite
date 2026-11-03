@@ -12,6 +12,7 @@ import {
   eventHeaderImage,
   eventWhen,
   eventWhere,
+  normalizeConfirmationRedirect,
   registrationIsOpen,
 } from "@/lib/events/portal";
 import { breadcrumbJsonLd, eventJsonLd } from "@/lib/structured-data";
@@ -74,53 +75,56 @@ export async function EventView({ event, url }: { event: EventRow; url: string }
           className="relative mx-auto aspect-[16/9] max-w-6xl overflow-hidden bg-mist lg:aspect-[21/9]"
         />
       ) : null}
-      <Section className="grid gap-10 lg:grid-cols-3">
-        <article className="lg:col-span-2">
-          {event.description ? <p className="whitespace-pre-line leading-relaxed text-muted">{event.description}</p> : null}
-          {event.registrationType === "ticketed" && event.ticketPrice ? (
-            <p className="mt-4 text-sm text-muted">
-              Ticket: {event.ticketPrice} {event.ticketCurrency ?? ""}
-            </p>
-          ) : null}
-          {(event.speakers ?? []).length ? (
-            <>
-              <h2 className="mt-10 font-display text-2xl">Speakers</h2>
-              <ul className="mt-3 space-y-2">
-                {(event.speakers ?? []).map((speaker) => (
-                  <li key={speaker.name}>
-                    <strong>{speaker.name}</strong>
-                    {speaker.title ? ` — ${speaker.title}` : ""}
-                  </li>
-                ))}
-              </ul>
-            </>
-          ) : null}
-          {event.postEventReport ? (
-            <>
-              <h2 className="mt-10 font-display text-2xl">Post-event report</h2>
-              <p className="mt-2 whitespace-pre-line text-muted">{event.postEventReport}</p>
-            </>
-          ) : null}
-        </article>
-        <aside>
-          {open ? (
-            <>
-              <p className="mb-4 text-sm text-muted">
-                {event.capacity
-                  ? remaining
-                    ? `${remaining} of ${event.capacity} places remaining.`
-                    : "This event is full. You can still say you want to attend and join the waitlist."
-                  : "Tell us whether you plan to attend."}
+      <Section>
+        <div className="mx-auto grid w-full max-w-3xl gap-10">
+          <article>
+            {event.description ? <p className="whitespace-pre-line leading-relaxed text-muted">{event.description}</p> : null}
+            {event.registrationType === "ticketed" && event.ticketPrice ? (
+              <p className="mt-4 text-sm text-muted">
+                Ticket: {event.ticketPrice} {event.ticketCurrency ?? ""}
               </p>
-              <EventRegisterForm
-                eventId={event.id}
-                fields={(event.customFields ?? []).filter((field) => field.kind !== "choice" || field.options.length >= 2)}
-              />
-            </>
-          ) : (
-            <p className="rounded-md bg-mist p-4 text-sm">Registration is closed.</p>
-          )}
-        </aside>
+            ) : null}
+            {(event.speakers ?? []).length ? (
+              <>
+                <h2 className="mt-10 font-display text-2xl">Speakers</h2>
+                <ul className="mt-3 space-y-2">
+                  {(event.speakers ?? []).map((speaker) => (
+                    <li key={speaker.name}>
+                      <strong>{speaker.name}</strong>
+                      {speaker.title ? ` — ${speaker.title}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : null}
+            {event.postEventReport ? (
+              <>
+                <h2 className="mt-10 font-display text-2xl">Post-event report</h2>
+                <p className="mt-2 whitespace-pre-line text-muted">{event.postEventReport}</p>
+              </>
+            ) : null}
+          </article>
+          <aside>
+            {open ? (
+              <>
+                <p className="mb-4 text-sm text-muted">
+                  {event.capacity
+                    ? remaining
+                      ? `${remaining} of ${event.capacity} places remaining.`
+                      : "This event is full. You can still say you want to attend and join the waitlist."
+                    : "Tell us whether you plan to attend."}
+                </p>
+                <EventRegisterForm
+                  eventId={event.id}
+                  fields={(event.customFields ?? []).filter((field) => field.kind !== "choice" || field.options.length >= 2)}
+                  redirectUrl={normalizeConfirmationRedirect(event.confirmationRedirectUrl)}
+                />
+              </>
+            ) : (
+              <p className="rounded-md bg-mist p-4 text-sm">Registration is closed.</p>
+            )}
+          </aside>
+        </div>
       </Section>
     </>
   );
