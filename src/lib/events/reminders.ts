@@ -15,10 +15,23 @@ import { getSiteUrl } from "@/lib/env";
 
 const MAX_SENDS = 200;
 
-export async function sendDueEventReminders() {
+/** 07:00 UTC, which is 08:00 in Lagos. Must match the daily cron in vercel.json. */
+export const DAILY_REMINDER_HOUR_UTC = 7;
+
+/** The next 07:00 UTC. After that hour, this is tomorrow, so the morning job covers the coming day. */
+export function nextDailyReminderRun(now = new Date()) {
+  const next = new Date(now);
+  next.setUTCMinutes(0, 0, 0);
+  next.setUTCHours(DAILY_REMINDER_HOUR_UTC);
+  if (next.getTime() < now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
+  return next;
+}
+
+export async function sendDueEventReminders(options?: { until?: Date }) {
   await ensureEventEmailTemplates();
   const db = getDb();
   const now = new Date();
+  const until = options?.until ?? now;
   const upcoming = await db
     .select()
     .from(events)
@@ -34,7 +47,10 @@ export async function sendDueEventReminders() {
     const offsets = (event.reminderOffsetsHours ?? []).filter((hours) => Number.isInteger(hours) && hours > 0);
     const dueOffsets = offsets.filter((hours) => {
       const sendAt = event.startsAt!.getTime() - hours * 60 * 60 * 1000;
-      return now.getTime() >= sendAt;
+      // Day-scale reminders can go on the morning run before their exact time.
+      // Shorter reminders, such as 2 hours, wait until that time has passed.
+      const deadline = hours >= 24 ? until.getTime() : now.getTime();
+      return deadline >= sendAt;
     });
     if (!dueOffsets.length) continue;
     const token = await ensureRsvpToken(event.id, event.rsvpToken);

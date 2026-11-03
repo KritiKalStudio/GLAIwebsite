@@ -115,11 +115,14 @@ export default async function EditEventPage({
             <Button type="submit">Send invitations</Button>
           </div>
         </form>
-        <form action={sendDueReminders}>
+        <form action={sendDueReminders} className="space-y-2">
           <input type="hidden" name="eventId" value={event.id} />
           <Button type="submit" variant="outline">
             Send due reminders
           </Button>
+          <p className="text-sm text-muted">
+            Automatic reminders run once each morning. This sends any reminder whose time has already passed.
+          </p>
         </form>
       </section>
 

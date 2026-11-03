@@ -121,7 +121,9 @@ export function EventForm({
       <fieldset className="grid gap-2 rounded-md border border-brand/10 p-4">
         <legend className="px-1 text-sm font-semibold">Email reminders</legend>
         <p className="text-xs text-muted">
-          Sent to guests who are attending or undecided, once the chosen time before the start has passed.
+          Sent to guests who are attending or undecided. Automatic mail goes out once each morning, Lagos time, so
+          7-day and 1-day reminders are covered. A 2-hour reminder is not sent by that morning run. Use Send due
+          reminders on the saved event when you want it.
         </p>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" name="remind168" defaultChecked={!event || offsets.has(168)} />

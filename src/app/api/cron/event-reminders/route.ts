@@ -1,4 +1,4 @@
-import { sendDueEventReminders } from "@/lib/events/reminders";
+import { nextDailyReminderRun, sendDueEventReminders } from "@/lib/events/reminders";
 import { optionalEnv } from "@/lib/env";
 
 export const dynamic = "force-dynamic";
@@ -9,6 +9,6 @@ export async function GET(request: Request) {
   if (!secret || header !== `Bearer ${secret}`) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const result = await sendDueEventReminders();
+  const result = await sendDueEventReminders({ until: nextDailyReminderRun() });
   return Response.json(result);
 }
