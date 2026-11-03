@@ -82,11 +82,11 @@ export async function EventView({ event, url }: { event: EventRow; url: string }
               Ticket: {event.ticketPrice} {event.ticketCurrency ?? ""}
             </p>
           ) : null}
-          {event.speakers.length ? (
+          {(event.speakers ?? []).length ? (
             <>
               <h2 className="mt-10 font-display text-2xl">Speakers</h2>
               <ul className="mt-3 space-y-2">
-                {event.speakers.map((speaker) => (
+                {(event.speakers ?? []).map((speaker) => (
                   <li key={speaker.name}>
                     <strong>{speaker.name}</strong>
                     {speaker.title ? ` — ${speaker.title}` : ""}

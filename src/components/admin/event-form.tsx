@@ -14,7 +14,6 @@ export function EventForm({
 }: {
   event?: {
     id: string;
-    slug: string;
     title: string;
     description: string;
     startsAt: Date | null;
@@ -46,11 +45,12 @@ export function EventForm({
   return (
     <form action={saveEvent} className="mt-6 grid max-w-3xl gap-4">
       {event ? <input type="hidden" name="id" value={event.id} /> : null}
-      <Field label="Title" name="title" hint="Optional. Guests see “Untitled event” until you add one.">
+      <Field
+        label="Title"
+        name="title"
+        hint="The public link is created from this title. “Lagos dialogue” becomes /events/lagos-dialogue. A street address goes in Address below."
+      >
         <TextInput id="title" name="title" defaultValue={event?.title ?? ""} />
-      </Field>
-      <Field label="Web address" name="slug" hint="Optional. Leave blank and one is created from the title.">
-        <TextInput id="slug" name="slug" defaultValue={event?.slug ?? ""} />
       </Field>
       <Field label="Description" name="description" hint="Optional.">
         <TextArea id="description" name="description" className="min-h-40" defaultValue={event?.description ?? ""} />
@@ -140,7 +140,7 @@ export function EventForm({
         </Field>
       </fieldset>
       <EventFieldsEditor initial={event?.customFields ?? []} />
-      <Field label="Status" name="status">
+      <Field label="Status" name="status" hint="Visitors can open the public page only when this is Published.">
         <Select id="status" name="status" defaultValue={event?.status ?? "draft"}>
           <option value="draft">Draft</option>
           <option value="preview">Preview</option>

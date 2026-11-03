@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/cn";
+import { ContentImage } from "@/components/ui/content-image";
 
 export function Card({
   className,
@@ -38,13 +38,7 @@ export function MediaCard({
     <article className={cn("media-card", className)}>
       {imageUrl ? (
         <div className="media-card-image">
-          <Image
-            src={imageUrl}
-            alt={imageAlt}
-            fill
-            className="object-cover"
-            sizes="(max-width: 767px) 96px, 400px"
-          />
+          <ContentImage src={imageUrl} alt={imageAlt} sizes="(max-width: 767px) 96px, 400px" />
         </div>
       ) : null}
       <div className="media-card-body">{children}</div>

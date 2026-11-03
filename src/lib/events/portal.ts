@@ -77,6 +77,30 @@ export function slugifyEvent(value: string) {
     .slice(0, 80);
 }
 
+/** A slug that can be one path segment without encoding spaces or punctuation. */
+export function isPublicSlug(value: string) {
+  return /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(value);
+}
+
+/**
+ * The public link is always derived from the title. An existing safe link stays
+ * put until the title changes. A hand-typed address is replaced.
+ */
+export async function resolveEventSlug(
+  title: string,
+  current?: { slug: string; title: string } | null,
+  currentId?: string,
+) {
+  const fromTitle = slugifyEvent(title);
+  if (!current) return uniqueEventSlug(fromTitle || title, currentId);
+  if (!isPublicSlug(current.slug)) return uniqueEventSlug(fromTitle || title, currentId);
+  const previous = slugifyEvent(current.title);
+  if (previous && current.slug === previous && fromTitle && fromTitle !== current.slug) {
+    return uniqueEventSlug(fromTitle, currentId);
+  }
+  return current.slug;
+}
+
 export async function uniqueEventSlug(base: string, currentId?: string) {
   const db = getDb();
   const root = slugifyEvent(base) || `event-${randomBytes(3).toString("hex")}`;

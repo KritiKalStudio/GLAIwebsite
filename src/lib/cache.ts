@@ -26,13 +26,8 @@ export function cached<TArgs extends unknown[], TResult>(
   fn: (...args: TArgs) => Promise<TResult>,
   revalidate = DEFAULT_REVALIDATE_SECONDS,
 ): (...args: TArgs) => Promise<TResult> {
-  return cache((...args: TArgs) =>
-    unstable_cache(
-      async () => fn(...args),
-      [key, ...args.map((value) => JSON.stringify(value ?? null))],
-      { tags, revalidate },
-    )(),
-  );
+  const run = unstable_cache(async (...args: TArgs) => fn(...args), [key], { tags, revalidate });
+  return cache((...args: TArgs) => run(...args));
 }
 
 export function revalidateContent(...tags: string[]) {

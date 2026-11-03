@@ -12,7 +12,7 @@ import { requireAdmin } from "@/lib/admin";
 import { listMediaLibrary } from "@/lib/content/media";
 import { decryptField } from "@/lib/crypto";
 import { getRequestSiteUrl } from "@/lib/env";
-import { absoluteUrl, answersSummary, ensureRsvpToken, eventDisplayTitle, registrationIsOpen, rsvpLabel, rsvpPath } from "@/lib/events/portal";
+import { absoluteUrl, answersSummary, ensureRsvpToken, eventDisplayTitle, isPublicSlug, registrationIsOpen, rsvpLabel, rsvpPath, slugifyEvent } from "@/lib/events/portal";
 import { formatDate } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -49,7 +49,8 @@ export default async function EditEventPage({
     getRequestSiteUrl(),
   ]);
   const rsvpUrl = absoluteUrl(origin, rsvpPath(token));
-  const publicUrl = event.status === "published" ? absoluteUrl(origin, `/events/${event.slug}`) : null;
+  const publicSlug = isPublicSlug(event.slug) ? event.slug : slugifyEvent(event.title);
+  const publicUrl = publicSlug ? absoluteUrl(origin, `/events/${publicSlug}`) : null;
   const invited = Number(notice.invited ?? "");
   const inviteFailed = Number(notice.inviteFailed ?? "");
   const reminders = Number(notice.reminders ?? "");
@@ -60,8 +61,8 @@ export default async function EditEventPage({
       <div>
         <h1 className="font-display text-3xl">Edit event</h1>
         <p className="mt-2 text-sm text-muted">
-          Registration is {registrationIsOpen(event) ? "open" : "closed"}. Guest details on
-          this page are visible only to staff with the Events permission.
+          Registration is {registrationIsOpen(event) ? "open" : "closed"}. The public link is created from the title.
+          Guest details on this page are visible only to staff with the Events permission.
         </p>
         {notice.attendance === "saved" ? (
           <p className="mt-3 rounded-md bg-hope/15 px-3 py-2 text-sm">Attendance updated.</p>
@@ -72,26 +73,29 @@ export default async function EditEventPage({
             {reminderFailed ? ` · ${reminderFailed} failed` : ""}.
           </p>
         ) : null}
-        <EventForm event={event} media={media} />
       </div>
 
-      <section className="max-w-3xl space-y-4">
-        <h2 className="font-display text-2xl">RSVP link</h2>
-        <p className="text-sm text-muted">
-          Share this link with guests. They can read the event and confirm whether they will attend. The same email
-          address updates an earlier response.
-        </p>
-        <CopyLink url={rsvpUrl} />
-        {publicUrl ? (
-          <p className="text-sm">
-            Published page:{" "}
-            <a className="text-accent" href={publicUrl}>
-              {publicUrl}
-            </a>
+      <section className="max-w-3xl space-y-4 rounded-md border border-brand/10 bg-paper p-4">
+        <h2 className="font-display text-2xl">Share this event</h2>
+        <div className="space-y-2">
+          <p className="text-sm font-semibold">Public page</p>
+          <p className="text-sm text-muted">
+            Created from the title. It is not the street address.
+            {event.status === "published"
+              ? " Visitors can open it now."
+              : " Visitors can open it after you set the status to Published and save."}
+            {!isPublicSlug(event.slug) ? " Save the event to replace the old page address with this link." : ""}
           </p>
-        ) : (
-          <p className="text-sm text-muted">This event is not on the public events list until its status is Published. The RSVP link still works.</p>
-        )}
+          {publicUrl ? <CopyLink url={publicUrl} /> : <p className="text-sm text-muted">Add a title and save to create the public link.</p>}
+        </div>
+        <div className="space-y-2">
+          <p className="text-sm font-semibold">Guest link</p>
+          <p className="text-sm text-muted">
+            Email this link to guests. They can read the event and confirm whether they will attend. The same email
+            address updates an earlier response. This link works before the event is published.
+          </p>
+          <CopyLink url={rsvpUrl} />
+        </div>
         {notice.inviteError === "none" ? (
           <p className="rounded-md bg-danger/10 px-3 py-2 text-sm text-danger">Enter at least one valid email address.</p>
         ) : null}
@@ -118,6 +122,8 @@ export default async function EditEventPage({
           </Button>
         </form>
       </section>
+
+      <EventForm event={event} media={media} />
 
       <section>
         <h2 className="font-display text-2xl">Registrations</h2>

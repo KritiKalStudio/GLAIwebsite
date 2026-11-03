@@ -41,8 +41,9 @@ import {
   parseCustomFields,
   parseOptionalDate,
   parseReminderOffsets,
-  uniqueEventSlug,
+  resolveEventSlug,
 } from "@/lib/events/portal";
+import { normalizeMediaUrl } from "@/lib/media-url";
 import { mergeMailSettings, persistResendApiKey, persistSmtpPassword } from "@/lib/mail";
 import { sanitizeRichText } from "@/lib/rich-text";
 import { rewriteLegacyApplyHref, rewriteNavHrefs } from "@/lib/nav";
@@ -298,7 +299,14 @@ export async function saveEvent(formData: FormData) {
   const user = await actor("events");
   const id = str(formData, "id");
   const title = str(formData, "title");
-  const slug = await uniqueEventSlug(str(formData, "slug") || title, id || undefined);
+  const [current] = id
+    ? await getDb()
+        .select({ rsvpToken: events.rsvpToken, slug: events.slug, title: events.title })
+        .from(events)
+        .where(eq(events.id, id))
+        .limit(1)
+    : [];
+  const slug = await resolveEventSlug(title, current ?? null, id || undefined);
   const registrationTypeInput = str(formData, "registrationType");
   const registrationType = registrationTypeInput === "ticketed" ? "ticketed" : "free";
   const capacityValue = str(formData, "capacity");
@@ -319,8 +327,8 @@ export async function saveEvent(formData: FormData) {
     capacity: capacity != null && Number.isFinite(capacity) && capacity >= 0 ? Math.floor(capacity) : null,
     registrationOpen: formData.get("registrationOpen") === "on",
     registrationType: registrationType as never,
-    featuredImageUrl: str(formData, "featuredImageUrl") || null,
-    thumbnailUrl: str(formData, "thumbnailUrl") || null,
+    featuredImageUrl: normalizeMediaUrl(str(formData, "featuredImageUrl")),
+    thumbnailUrl: normalizeMediaUrl(str(formData, "thumbnailUrl")),
     youtubeUrl: str(formData, "youtubeUrl") || null,
     postEventReport: str(formData, "postEventReport") || null,
     customFields: parseCustomFields(str(formData, "customFields")),
@@ -329,11 +337,6 @@ export async function saveEvent(formData: FormData) {
     updatedAt: new Date(),
   };
   if (id) {
-    const [current] = await getDb()
-      .select({ rsvpToken: events.rsvpToken, slug: events.slug })
-      .from(events)
-      .where(eq(events.id, id))
-      .limit(1);
     const token = current?.rsvpToken || newRsvpToken();
     await getDb()
       .update(events)

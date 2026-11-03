@@ -1,7 +1,9 @@
+import { cache } from "react";
 import { and, asc, desc, eq, ne } from "drizzle-orm";
 import { getDb } from "@/db";
 import { eventRegistrations, events } from "@/db/schema";
 import { CACHE_TAGS, cached } from "@/lib/cache";
+import { slugifyEvent } from "@/lib/events/portal";
 import { getDefaultLocale, getRequestLocale } from "@/lib/locale";
 
 const loadPublishedEvents = cached("published-events", [CACHE_TAGS.events], async () => {
@@ -49,29 +51,42 @@ export async function getPastEvents() {
     .sort((a, b) => eventStartMs(b.startsAt)! - eventStartMs(a.startsAt)!);
 }
 
-export const getPublishedEvent = cached("published-event", [CACHE_TAGS.events], async (slug: string) => {
+function decodeSlug(value: string) {
+  try {
+    return decodeURIComponent(value).trim();
+  } catch {
+    return value.trim();
+  }
+}
+
+/**
+ * Direct read, not the shared data cache. A stale cached miss was rendering
+ * the public event page as 404 while the events list still showed the event.
+ */
+export const getPublishedEvent = cache(async (slug: string) => {
+  const wanted = decodeSlug(slug);
+  const db = getDb();
+  const [exact] = await db
+    .select()
+    .from(events)
+    .where(and(eq(events.slug, wanted), eq(events.status, "published")))
+    .limit(1);
+  if (exact) return exact;
+  const normalized = slugifyEvent(wanted);
+  if (!normalized || normalized === wanted) return null;
+  const rows = await db.select().from(events).where(eq(events.status, "published"));
+  return rows.find((row) => row.slug === normalized || slugifyEvent(row.slug) === normalized) ?? null;
+});
+
+export const getEventByRsvpToken = cache(async (token: string) => {
   const db = getDb();
   const [event] = await db
     .select()
     .from(events)
-    .where(and(eq(events.slug, slug), eq(events.status, "published")))
+    .where(and(eq(events.rsvpToken, token), ne(events.status, "archived")))
     .limit(1);
   return event ?? null;
 });
-
-export const getEventByRsvpToken = cached(
-  "event-rsvp-token",
-  [CACHE_TAGS.events],
-  async (token: string) => {
-    const db = getDb();
-    const [event] = await db
-      .select()
-      .from(events)
-      .where(and(eq(events.rsvpToken, token), ne(events.status, "archived")))
-      .limit(1);
-    return event ?? null;
-  },
-);
 
 export async function listEventsForAdmin() {
   const db = getDb();

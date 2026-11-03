@@ -6,6 +6,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { getMediaBaseUrl, requiredEnv } from "@/lib/env";
+import { normalizeMediaUrl } from "@/lib/media-url";
 
 let client: S3Client | null = null;
 
@@ -44,10 +45,10 @@ export function getBucketName(): string {
 }
 
 export function publicMediaUrl(key: string): string {
-  const base = getMediaBaseUrl();
   const cleanKey = key.replace(/^\//, "");
+  const base = normalizeMediaUrl(getMediaBaseUrl());
   if (!base) return `/${cleanKey}`;
-  return `${base}/${cleanKey}`;
+  return `${base.replace(/\/$/, "")}/${cleanKey}`;
 }
 
 export async function pingR2Bucket(): Promise<void> {

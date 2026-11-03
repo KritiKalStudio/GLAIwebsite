@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ContentImage } from "@/components/ui/content-image";
 import { youtubeIdFromUrl } from "@/lib/youtube";
 
 export function MediaFrame({
@@ -31,7 +31,7 @@ export function MediaFrame({
   }
   return (
     <div className={className}>
-      <Image src={src} alt={alt} fill className="object-cover" sizes="(min-width: 1024px) 960px, 100vw" />
+      <ContentImage src={src} alt={alt} sizes="(min-width: 1024px) 960px, 100vw" />
     </div>
   );
 }

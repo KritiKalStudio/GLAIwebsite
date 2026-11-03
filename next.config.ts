@@ -1,8 +1,7 @@
 import type { NextConfig } from "next";
+import { imageHostnames } from "./src/lib/media-url";
 
-const mediaHost = process.env.NEXT_PUBLIC_MEDIA_BASE_URL
-  ? new URL(process.env.NEXT_PUBLIC_MEDIA_BASE_URL).hostname
-  : "pub-2523b5c66e3a4c9a8910900e1f632c44.r2.dev";
+const imageHosts = imageHostnames(process.env.NEXT_PUBLIC_MEDIA_BASE_URL);
 
 const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
@@ -33,12 +32,7 @@ const nextConfig: NextConfig = {
     ];
   },
   images: {
-    remotePatterns: [
-      { protocol: "https", hostname: mediaHost },
-      { protocol: "https", hostname: "images.unsplash.com" },
-      { protocol: "https", hostname: "img.youtube.com" },
-      { protocol: "https", hostname: "i.ytimg.com" },
-    ],
+    remotePatterns: imageHosts.map((hostname) => ({ protocol: "https" as const, hostname })),
   },
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];
