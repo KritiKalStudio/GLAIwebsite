@@ -64,6 +64,35 @@ export function isValidEmail(email: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+const REDIRECT_MAX = 2000;
+
+/**
+ * A page to open after a guest confirms. Accepts a site path or an http(s) address.
+ * Returns null when the field is empty or the value is not a safe link.
+ */
+export function normalizeConfirmationRedirect(value: string | null | undefined) {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed || trimmed.length > REDIRECT_MAX) return null;
+  if (/[\u0000-\u001F\u007F\s]/.test(trimmed)) return null;
+
+  if (trimmed.startsWith("/")) {
+    if (trimmed.startsWith("//") || trimmed.startsWith("/\\") || trimmed.includes("\\")) return null;
+    return trimmed;
+  }
+
+  const withScheme = /^[a-z][a-z0-9+.-]*:/i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  let url: URL;
+  try {
+    url = new URL(withScheme);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+  if (url.username || url.password) return null;
+  if (!url.hostname || url.hostname === ".") return null;
+  return url.toString();
+}
+
 export function newRsvpToken() {
   return randomBytes(18).toString("base64url");
 }

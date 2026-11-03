@@ -30,6 +30,7 @@ export default async function EditEventPage({
     attendance?: string;
     reminders?: string;
     reminderFailed?: string;
+    redirectLink?: string;
   }>;
 }) {
   await requireAdmin("events");
@@ -64,6 +65,12 @@ export default async function EditEventPage({
           Registration is {registrationIsOpen(event) ? "open" : "closed"}. The public link is created from the title.
           Guest details on this page are visible only to staff with the Events permission.
         </p>
+        {notice.redirectLink === "invalid" ? (
+          <p className="mt-3 rounded-md bg-danger/10 px-3 py-2 text-sm text-danger" role="alert">
+            The redirect link was not saved. Use a full address such as https://example.com/thanks, or a path on this
+            site such as /donate.
+          </p>
+        ) : null}
         {notice.attendance === "saved" ? (
           <p className="mt-3 rounded-md bg-hope/15 px-3 py-2 text-sm">Attendance updated.</p>
         ) : null}

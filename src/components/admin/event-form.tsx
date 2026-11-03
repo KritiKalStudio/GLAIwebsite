@@ -34,6 +34,7 @@ export function EventForm({
     postEventReport: string | null;
     customFields: EventCustomField[];
     reminderOffsetsHours: number[];
+    confirmationRedirectUrl?: string | null;
     status: string;
   };
   media: MediaChoice[];
@@ -118,6 +119,19 @@ export function EventForm({
         <input type="checkbox" name="registrationOpen" defaultChecked={registrationOn} />
         Registration is open
       </label>
+      <Field
+        label="Redirect link"
+        name="confirmationRedirectUrl"
+        hint="Optional. After a guest confirms and sees the confirmation, this page opens. Use a full address such as https://example.com/thanks, or a path on this site such as /donate. Leave blank to stay on the event."
+      >
+        <TextInput
+          id="confirmationRedirectUrl"
+          name="confirmationRedirectUrl"
+          defaultValue={event?.confirmationRedirectUrl ?? ""}
+          placeholder="https://"
+          maxLength={2000}
+        />
+      </Field>
       <fieldset className="grid gap-2 rounded-md border border-brand/10 p-4">
         <legend className="px-1 text-sm font-semibold">Email reminders</legend>
         <p className="text-xs text-muted">

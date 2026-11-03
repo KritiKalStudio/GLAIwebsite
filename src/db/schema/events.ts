@@ -66,6 +66,7 @@ export const events = pgTable("events", {
   thumbnailUrl: text("thumbnail_url"),
   customFields: jsonb("custom_fields").$type<EventCustomField[]>().notNull().default([]),
   reminderOffsetsHours: jsonb("reminder_offsets_hours").$type<number[]>().notNull().default([168, 24]),
+  confirmationRedirectUrl: text("confirmation_redirect_url"),
   rsvpToken: text("rsvp_token").unique(),
   programId: uuid("program_id").references(() => programs.id, {
     onDelete: "set null",

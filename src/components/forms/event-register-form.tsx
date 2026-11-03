@@ -1,13 +1,24 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { registerForEvent } from "@/app/actions/events";
 import { Button } from "@/components/ui/button";
 import { Field, FormError, FormSuccess, TextArea, TextInput } from "@/components/ui/field";
 import type { EventCustomField } from "@/db/schema";
 
-export function EventRegisterForm({ eventId, fields }: { eventId: string; fields: EventCustomField[] }) {
+const REDIRECT_DELAY_MS = 1800;
+
+export function EventRegisterForm({
+  eventId,
+  fields,
+  redirectUrl,
+}: {
+  eventId: string;
+  fields: EventCustomField[];
+  redirectUrl?: string | null;
+}) {
   const [state, action, pending] = useActionState(registerForEvent, null);
+  const [leaving, setLeaving] = useState(false);
   const success = state?.ok
     ? state.response === "no"
       ? "You told us you cannot attend."
@@ -18,6 +29,15 @@ export function EventRegisterForm({ eventId, fields }: { eventId: string; fields
           : "You told us you will attend."
     : null;
 
+  useEffect(() => {
+    if (!state?.ok || !redirectUrl) return;
+    setLeaving(true);
+    const timer = window.setTimeout(() => {
+      window.location.assign(redirectUrl);
+    }, REDIRECT_DELAY_MS);
+    return () => window.clearTimeout(timer);
+  }, [state, redirectUrl]);
+
   return (
     <form action={action} className="grid gap-3 rounded-lg border border-brand/10 bg-paper p-5">
       <input type="hidden" name="eventId" value={eventId} />
@@ -25,8 +45,8 @@ export function EventRegisterForm({ eventId, fields }: { eventId: string; fields
         <FormSuccess
           message={
             state?.emailFailed
-              ? `${success} We saved your response, but the confirmation email could not be sent.`
-              : `${state?.updated ? "Your response was updated. " : ""}${success} A confirmation has been sent to your email.`
+              ? `${success} We saved your response, but the confirmation email could not be sent.${leaving ? " Opening the next page." : ""}`
+              : `${state?.updated ? "Your response was updated. " : ""}${success} A confirmation has been sent to your email.${leaving ? " Opening the next page." : ""}`
           }
         />
       ) : null}

@@ -38,6 +38,7 @@ import { putObject } from "@/lib/r2";
 import { sendTemplatedEmail } from "@/lib/email";
 import {
   newRsvpToken,
+  normalizeConfirmationRedirect,
   parseCustomFields,
   parseOptionalDate,
   parseReminderOffsets,
@@ -311,6 +312,9 @@ export async function saveEvent(formData: FormData) {
   const registrationType = registrationTypeInput === "ticketed" ? "ticketed" : "free";
   const capacityValue = str(formData, "capacity");
   const capacity = capacityValue ? Number(capacityValue) : null;
+  const redirectRaw = str(formData, "confirmationRedirectUrl");
+  const confirmationRedirectUrl = normalizeConfirmationRedirect(redirectRaw);
+  const redirectLinkInvalid = Boolean(redirectRaw) && !confirmationRedirectUrl;
   const values = {
     slug,
     title,
@@ -333,6 +337,7 @@ export async function saveEvent(formData: FormData) {
     postEventReport: str(formData, "postEventReport") || null,
     customFields: parseCustomFields(str(formData, "customFields")),
     reminderOffsetsHours: parseReminderOffsets(formData),
+    ...(redirectLinkInvalid ? {} : { confirmationRedirectUrl }),
     status: str(formData, "status") as never,
     updatedAt: new Date(),
   };
@@ -348,18 +353,18 @@ export async function saveEvent(formData: FormData) {
     revalidatePath(`/events/${values.slug}`);
     if (current?.slug && current.slug !== values.slug) revalidatePath(`/events/${current.slug}`);
     revalidatePath(`/rsvp/${token}`);
-    redirect(`/admin/events/${id}`);
+    redirect(`/admin/events/${id}${redirectLinkInvalid ? "?redirectLink=invalid" : ""}`);
   }
   const [created] = await getDb()
     .insert(events)
-    .values({ ...values, rsvpToken: newRsvpToken() })
+    .values({ ...values, confirmationRedirectUrl: confirmationRedirectUrl, rsvpToken: newRsvpToken() })
     .returning();
   await recordAudit({ actorId: user.id, action: "event.create", entityType: "event", entityId: created.id });
   revalidateContent(CACHE_TAGS.events);
   revalidatePath("/events");
   revalidatePath(`/events/${created.slug}`);
   if (created.rsvpToken) revalidatePath(`/rsvp/${created.rsvpToken}`);
-  redirect(`/admin/events/${created.id}`);
+  redirect(`/admin/events/${created.id}${redirectLinkInvalid ? "?redirectLink=invalid" : ""}`);
 }
 
 export async function saveImpactStat(formData: FormData) {
