@@ -1,6 +1,11 @@
 import { getPublishedEvent } from "@/lib/content/events";
 
 
+function asDate(value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 function stamp(date: Date) {
   return date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
 }
@@ -11,8 +16,9 @@ export async function GET(
 ) {
   const { slug } = await params;
   const event = await getPublishedEvent(slug);
-  if (!event) return new Response("Not found", { status: 404 });
-  const end = event.endsAt ?? new Date(event.startsAt.getTime() + 60 * 60 * 1000);
+  const start = event?.startsAt ? asDate(event.startsAt) : null;
+  if (!event || !start) return new Response("Not found", { status: 404 });
+  const end = (event.endsAt ? asDate(event.endsAt) : null) ?? new Date(start.getTime() + 60 * 60 * 1000);
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
@@ -20,9 +26,9 @@ export async function GET(
     "BEGIN:VEVENT",
     `UID:${event.id}@globalloveambassadors.org`,
     `DTSTAMP:${stamp(new Date())}`,
-    `DTSTART:${stamp(event.startsAt)}`,
+    `DTSTART:${stamp(start)}`,
     `DTEND:${stamp(end)}`,
-    `SUMMARY:${event.title}`,
+    `SUMMARY:${event.title || "Untitled event"}`,
     `DESCRIPTION:${event.description.replace(/\n/g, "\\n")}`,
     `LOCATION:${event.isOnline ? event.onlineUrl ?? "Online" : [event.venueName, event.city, event.country].filter(Boolean).join(", ")}`,
     "END:VEVENT",

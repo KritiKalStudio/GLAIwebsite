@@ -36,6 +36,13 @@ import { recordAudit } from "@/lib/audit";
 import { getSessionUser, hashPassword, hasPermission, isAdmin, isPrimaryAdmin } from "@/lib/auth";
 import { putObject } from "@/lib/r2";
 import { sendTemplatedEmail } from "@/lib/email";
+import {
+  newRsvpToken,
+  parseCustomFields,
+  parseOptionalDate,
+  parseReminderOffsets,
+  uniqueEventSlug,
+} from "@/lib/events/portal";
 import { mergeMailSettings, persistResendApiKey, persistSmtpPassword } from "@/lib/mail";
 import { sanitizeRichText } from "@/lib/rich-text";
 import { rewriteLegacyApplyHref, rewriteNavHrefs } from "@/lib/nav";
@@ -290,35 +297,65 @@ export async function saveProject(formData: FormData) {
 export async function saveEvent(formData: FormData) {
   const user = await actor("events");
   const id = str(formData, "id");
+  const title = str(formData, "title");
+  const slug = await uniqueEventSlug(str(formData, "slug") || title, id || undefined);
+  const registrationTypeInput = str(formData, "registrationType");
+  const registrationType = registrationTypeInput === "ticketed" ? "ticketed" : "free";
+  const capacityValue = str(formData, "capacity");
+  const capacity = capacityValue ? Number(capacityValue) : null;
   const values = {
-    slug: str(formData, "slug"),
-    title: str(formData, "title"),
+    slug,
+    title,
     description: str(formData, "description"),
-    startsAt: new Date(str(formData, "startsAt")),
-    endsAt: str(formData, "endsAt") ? new Date(str(formData, "endsAt")) : null,
+    startsAt: parseOptionalDate(str(formData, "startsAt")),
+    endsAt: parseOptionalDate(str(formData, "endsAt")),
     timezone: str(formData, "timezone") || "Africa/Lagos",
     city: str(formData, "city") || null,
     country: str(formData, "country") || null,
     venueName: str(formData, "venueName") || null,
+    address: str(formData, "address") || null,
     isOnline: formData.get("isOnline") === "on",
     onlineUrl: str(formData, "onlineUrl") || null,
-    capacity: str(formData, "capacity") ? Number(str(formData, "capacity")) : null,
-    registrationType: str(formData, "registrationType") as never,
+    capacity: capacity != null && Number.isFinite(capacity) && capacity >= 0 ? Math.floor(capacity) : null,
+    registrationOpen: formData.get("registrationOpen") === "on",
+    registrationType: registrationType as never,
     featuredImageUrl: str(formData, "featuredImageUrl") || null,
+    thumbnailUrl: str(formData, "thumbnailUrl") || null,
     youtubeUrl: str(formData, "youtubeUrl") || null,
     postEventReport: str(formData, "postEventReport") || null,
+    customFields: parseCustomFields(str(formData, "customFields")),
+    reminderOffsetsHours: parseReminderOffsets(formData),
     status: str(formData, "status") as never,
     updatedAt: new Date(),
   };
   if (id) {
-    await getDb().update(events).set(values).where(eq(events.id, id));
+    const [current] = await getDb()
+      .select({ rsvpToken: events.rsvpToken, slug: events.slug })
+      .from(events)
+      .where(eq(events.id, id))
+      .limit(1);
+    const token = current?.rsvpToken || newRsvpToken();
+    await getDb()
+      .update(events)
+      .set({ ...values, rsvpToken: token })
+      .where(eq(events.id, id));
     await recordAudit({ actorId: user.id, action: "event.update", entityType: "event", entityId: id });
     revalidateContent(CACHE_TAGS.events);
+    revalidatePath("/events");
+    revalidatePath(`/events/${values.slug}`);
+    if (current?.slug && current.slug !== values.slug) revalidatePath(`/events/${current.slug}`);
+    revalidatePath(`/rsvp/${token}`);
     redirect(`/admin/events/${id}`);
   }
-  const [created] = await getDb().insert(events).values(values).returning();
+  const [created] = await getDb()
+    .insert(events)
+    .values({ ...values, rsvpToken: newRsvpToken() })
+    .returning();
   await recordAudit({ actorId: user.id, action: "event.create", entityType: "event", entityId: created.id });
   revalidateContent(CACHE_TAGS.events);
+  revalidatePath("/events");
+  revalidatePath(`/events/${created.slug}`);
+  if (created.rsvpToken) revalidatePath(`/rsvp/${created.rsvpToken}`);
   redirect(`/admin/events/${created.id}`);
 }
 

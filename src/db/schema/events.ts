@@ -7,6 +7,7 @@ import {
   pgTable,
   text,
   timestamp,
+  unique,
   uuid,
 } from "drizzle-orm/pg-core";
 import {
@@ -23,13 +24,23 @@ export type EventSpeaker = {
   photoUrl?: string;
 };
 
+export type EventCustomField = {
+  id: string;
+  label: string;
+  kind: "text" | "choice";
+  required: boolean;
+  options: string[];
+  multiple: boolean;
+};
+
+export type EventAnswers = Record<string, string | string[]>;
+
 export const events = pgTable("events", {
   id: uuid("id").primaryKey().defaultRandom(),
   slug: text("slug").notNull().unique(),
   locale: text("locale").notNull().default("en"),
-  title: text("title").notNull(),
-  startsAt: timestamp("starts_at", { withTimezone: true, mode: "date" })
-    .notNull(),
+  title: text("title").notNull().default(""),
+  startsAt: timestamp("starts_at", { withTimezone: true, mode: "date" }),
   endsAt: timestamp("ends_at", { withTimezone: true, mode: "date" }),
   timezone: text("timezone").notNull().default("Africa/Lagos"),
   venueName: text("venue_name"),
@@ -40,8 +51,9 @@ export const events = pgTable("events", {
   isOnline: boolean("is_online").notNull().default(false),
   onlineUrl: text("online_url"),
   speakers: jsonb("speakers").$type<EventSpeaker[]>().notNull().default([]),
-  description: text("description").notNull(),
+  description: text("description").notNull().default(""),
   capacity: integer("capacity"),
+  registrationOpen: boolean("registration_open").notNull().default(true),
   registrationType: eventRegistrationTypeEnum("registration_type")
     .notNull()
     .default("free"),
@@ -51,6 +63,10 @@ export const events = pgTable("events", {
   postEventReport: text("post_event_report"),
   youtubeUrl: text("youtube_url"),
   featuredImageUrl: text("featured_image_url"),
+  thumbnailUrl: text("thumbnail_url"),
+  customFields: jsonb("custom_fields").$type<EventCustomField[]>().notNull().default([]),
+  reminderOffsetsHours: jsonb("reminder_offsets_hours").$type<number[]>().notNull().default([168, 24]),
+  rsvpToken: text("rsvp_token").unique(),
   programId: uuid("program_id").references(() => programs.id, {
     onDelete: "set null",
   }),
@@ -71,11 +87,29 @@ export const eventRegistrations = pgTable("event_registrations", {
   name: text("name").notNull(),
   email: text("email").notNull(),
   phone: text("phone"),
+  rsvpResponse: text("rsvp_response"),
+  answers: jsonb("answers").$type<EventAnswers>().notNull().default({}),
   status: attendeeStatusEnum("status").notNull().default("registered"),
   createdAt: timestamp("created_at", { withTimezone: true, mode: "date" })
     .notNull()
     .defaultNow(),
 });
+
+export const eventReminderSends = pgTable(
+  "event_reminder_sends",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    eventId: uuid("event_id")
+      .notNull()
+      .references(() => events.id, { onDelete: "cascade" }),
+    registrationId: uuid("registration_id")
+      .notNull()
+      .references(() => eventRegistrations.id, { onDelete: "cascade" }),
+    offsetHours: integer("offset_hours").notNull(),
+    sentAt: timestamp("sent_at", { withTimezone: true, mode: "date" }).notNull().defaultNow(),
+  },
+  (table) => [unique("event_reminder_once").on(table.registrationId, table.offsetHours)],
+);
 
 export const eventsRelations = relations(events, ({ one, many }) => ({
   program: one(programs, {
@@ -83,14 +117,24 @@ export const eventsRelations = relations(events, ({ one, many }) => ({
     references: [programs.id],
   }),
   registrations: many(eventRegistrations),
+  reminderSends: many(eventReminderSends),
 }));
 
-export const eventRegistrationsRelations = relations(
-  eventRegistrations,
-  ({ one }) => ({
-    event: one(events, {
-      fields: [eventRegistrations.eventId],
-      references: [events.id],
-    }),
+export const eventRegistrationsRelations = relations(eventRegistrations, ({ one, many }) => ({
+  event: one(events, {
+    fields: [eventRegistrations.eventId],
+    references: [events.id],
   }),
-);
+  reminderSends: many(eventReminderSends),
+}));
+
+export const eventReminderSendsRelations = relations(eventReminderSends, ({ one }) => ({
+  event: one(events, {
+    fields: [eventReminderSends.eventId],
+    references: [events.id],
+  }),
+  registration: one(eventRegistrations, {
+    fields: [eventReminderSends.registrationId],
+    references: [eventRegistrations.id],
+  }),
+}));

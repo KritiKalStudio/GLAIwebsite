@@ -17,6 +17,7 @@ export default function robots(): MetadataRoute.Robots {
         "/reset-password",
         "/donate/receipt",
         "/donate/manage",
+        "/rsvp",
       ],
     },
     sitemap: `${base}/sitemap.xml`,

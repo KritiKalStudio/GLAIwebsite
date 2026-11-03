@@ -5,6 +5,7 @@ import { and, eq, sql } from "drizzle-orm";
 config({ path: ".env.local" });
 
 import { getDb, getSql } from "@/db";
+import { EVENT_EMAIL_TEMPLATES } from "@/lib/events/email-templates";
 import { requiredEnv } from "@/lib/env";
 import {
   ambassadors,
@@ -1085,16 +1086,7 @@ Replace this sample with the live 2026 campaign brief.`,
       subject: "Welcome to GLAI",
       body: "Dear {{name}},\n\nYou now have access to the Ambassador dashboard. Begin with your training modules and update your public-directory consent.\n\nGLAI",
     },
-    {
-      type: "event_registration",
-      subject: "Registration confirmed: {{eventTitle}}",
-      body: "Dear {{name}},\n\nYou are registered for {{eventTitle}} on {{eventDate}}. If the event is full you will be waitlisted and notified.\n\nGLAI",
-    },
-    {
-      type: "event_reminder",
-      subject: "Reminder: {{eventTitle}}",
-      body: "Dear {{name}},\n\nThis is a reminder that {{eventTitle}} begins on {{eventDate}}.\n\nGLAI",
-    },
+    ...EVENT_EMAIL_TEMPLATES,
     {
       type: "event_update",
       subject: "Update: {{eventTitle}}",

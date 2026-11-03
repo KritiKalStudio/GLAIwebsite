@@ -3,6 +3,7 @@ import nodemailer from "nodemailer";
 import { Resend } from "resend";
 import { getDb } from "@/db";
 import { notificationLog, notificationTemplates } from "@/db/schema";
+import { EVENT_EMAIL_TEMPLATES } from "@/lib/events/email-templates";
 import {
   formatFrom,
   fromAddressFor,
@@ -87,6 +88,9 @@ export async function sendTemplatedEmail(input: {
     .limit(1);
 
   const fallbackByType: Record<string, { subject: string; body: string }> = {
+    ...Object.fromEntries(
+      EVENT_EMAIL_TEMPLATES.map((template) => [template.type, { subject: template.subject, body: template.body }]),
+    ),
     signup_code: {
       subject: "Your GLAI confirmation code",
       body: "Hello {{name}},\n\nYour GLAI confirmation code is {{code}}. It expires in 10 minutes. If you did not sign up, ignore this email.",

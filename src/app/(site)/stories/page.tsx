@@ -3,6 +3,7 @@ import { Kicker, Section } from "@/components/blocks/section";
 import { YoutubeEpisodeCard } from "@/components/blocks/youtube-episode-card";
 import { Badge, MediaCard } from "@/components/ui/card";
 import { getPublishedEvents } from "@/lib/content/events";
+import { eventCardImage, eventDisplayTitle, eventWhere } from "@/lib/events/portal";
 import { getPublishedStories, type StoryCategory } from "@/lib/content/stories";
 import { getPublishedVideos } from "@/lib/content/videos";
 import { formatDate } from "@/lib/format";
@@ -89,13 +90,13 @@ export default async function StoriesPage({
           <p className="mt-2 max-w-2xl text-sm text-muted">Gatherings published from the Events console.</p>
           <div className="mt-4 grid grid-cols-1 gap-3 sm:mt-6 sm:gap-6 md:grid-cols-2 lg:grid-cols-3">
             {publishedEvents.map((event) => (
-              <MediaCard key={event.id} href={`/events/${event.slug}`} imageUrl={event.featuredImageUrl} imageAlt={event.title}>
+              <MediaCard key={event.id} href={`/events/${event.slug}`} imageUrl={eventCardImage(event)} imageAlt={eventDisplayTitle(event)}>
                 <Badge>events</Badge>
-                <p className="mt-1 text-[10px] text-accent uppercase sm:mt-2 sm:text-xs">{formatDate(event.startsAt)}</p>
-                <h2 className="mt-1 font-display text-sm text-brand sm:mt-2 sm:text-xl">{event.title}</h2>
-                <p className="mt-1 text-xs text-muted sm:mt-2 sm:text-sm">
-                  {event.isOnline ? "Online" : [event.venueName, event.city, event.country].filter(Boolean).join(" · ")}
+                <p className="mt-1 text-[10px] text-accent uppercase sm:mt-2 sm:text-xs">
+                  {event.startsAt ? formatDate(event.startsAt) : "Date to be announced"}
                 </p>
+                <h2 className="mt-1 font-display text-sm text-brand sm:mt-2 sm:text-xl">{eventDisplayTitle(event)}</h2>
+                <p className="mt-1 text-xs text-muted sm:mt-2 sm:text-sm">{eventWhere(event)}</p>
               </MediaCard>
             ))}
           </div>

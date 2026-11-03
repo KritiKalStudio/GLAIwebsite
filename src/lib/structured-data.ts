@@ -53,12 +53,17 @@ export function articleJsonLd(input: {
   };
 }
 
+function asDate(value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
 export function eventJsonLd(input: {
   title: string;
   description?: string | null;
   url: string;
-  startsAt: Date;
-  endsAt?: Date | null;
+  startsAt: Date | string;
+  endsAt?: Date | string | null;
   isOnline: boolean;
   onlineUrl?: string | null;
   venueName?: string | null;
@@ -91,8 +96,8 @@ export function eventJsonLd(input: {
     description: input.description,
     url: input.url,
     image: input.imageUrl ?? undefined,
-    startDate: input.startsAt.toISOString(),
-    endDate: input.endsAt?.toISOString(),
+    startDate: asDate(input.startsAt)?.toISOString(),
+    endDate: input.endsAt ? asDate(input.endsAt)?.toISOString() : undefined,
     eventAttendanceMode: input.isOnline
       ? "https://schema.org/OnlineEventAttendanceMode"
       : "https://schema.org/OfflineEventAttendanceMode",

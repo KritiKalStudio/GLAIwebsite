@@ -1,62 +1,117 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { getDb } from "@/db";
 import { eventRegistrations, events } from "@/db/schema";
-import { countEventRegistrations } from "@/lib/content/events";
 import { encryptField } from "@/lib/crypto";
+import { ensureEventEmailTemplates } from "@/lib/events/email-templates";
+import {
+  absoluteUrl,
+  answersSummary,
+  ensureRsvpToken,
+  eventDisplayTitle,
+  eventWhen,
+  eventWhere,
+  holdsSeat,
+  isValidEmail,
+  readAnswers,
+  readRsvpResponse,
+  registrationIsOpen,
+  responseSentence,
+  rsvpPath,
+} from "@/lib/events/portal";
 import { sendTemplatedEmail } from "@/lib/email";
-import { formatDate } from "@/lib/format";
+import { getRequestSiteUrl } from "@/lib/env";
 
 export async function registerForEvent(
-  _prev: { error?: string; ok?: boolean; waitlist?: boolean } | null,
+  _prev: {
+    error?: string;
+    ok?: boolean;
+    waitlist?: boolean;
+    updated?: boolean;
+    emailFailed?: boolean;
+    response?: "yes" | "no" | "maybe";
+  } | null,
   formData: FormData,
-): Promise<{ error?: string; ok?: boolean; waitlist?: boolean }> {
+): Promise<{
+  error?: string;
+  ok?: boolean;
+  waitlist?: boolean;
+  updated?: boolean;
+  emailFailed?: boolean;
+  response?: "yes" | "no" | "maybe";
+}> {
   const eventId = String(formData.get("eventId") ?? "");
-  const name = String(formData.get("name") ?? "").trim();
+  const name = String(formData.get("name") ?? "").trim().slice(0, 120);
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const phone = String(formData.get("phone") ?? "").trim();
-  if (!eventId || !name || !email) {
-    return { error: "Please complete name and email." };
-  }
+  const phone = String(formData.get("phone") ?? "").trim().slice(0, 40);
+  const response = readRsvpResponse(formData);
+  if (!eventId || !name || !email) return { error: "Please complete name and email." };
+  if (!isValidEmail(email)) return { error: "Enter a valid email address." };
+  if (!response) return { error: "Please say whether you intend to attend." };
 
-  const [event] = await getDb().select().from(events).where(eq(events.id, eventId)).limit(1);
-  if (!event || event.status !== "published") return { error: "This event is not open." };
-  if (event.registrationType === "closed") {
-    return { error: "Registration for this event is closed." };
-  }
+  const db = getDb();
+  const [event] = await db.select().from(events).where(eq(events.id, eventId)).limit(1);
+  if (!event || event.status === "archived") return { error: "This event is not open." };
+  if (!registrationIsOpen(event)) return { error: "Registration for this event is closed." };
 
-  const existing = await getDb()
+  const parsed = readAnswers(formData, event.customFields ?? []);
+  if (parsed.error || !parsed.answers) return { error: parsed.error ?? "Please check the form." };
+
+  const existingRows = await db
     .select()
     .from(eventRegistrations)
-    .where(and(eq(eventRegistrations.eventId, eventId), eq(eventRegistrations.email, email)))
-    .limit(1);
-  if (existing[0] && existing[0].status !== "cancelled") {
-    return { error: "This email is already registered." };
-  }
+    .where(eq(eventRegistrations.eventId, eventId));
+  const existing = existingRows.find((row) => row.email === email);
+  const seats = existingRows.filter((row) => row.email !== email && holdsSeat(row)).length;
+  const wantsSeat = response !== "no";
+  const isFull = event.capacity != null && wantsSeat && seats >= event.capacity;
 
-  const counts = await countEventRegistrations(eventId);
-  const isFull = event.capacity != null && counts.registered >= event.capacity;
-  const status = isFull ? "waitlist" : "registered";
+  let status: "registered" | "waitlist" | "cancelled" | "attended" = "registered";
+  if (response === "no") status = "cancelled";
+  else if (existing?.status === "attended") status = "attended";
+  else if (isFull) status = "waitlist";
 
-  await getDb().insert(eventRegistrations).values({
-    eventId,
+  const values = {
     name,
     email,
     phone: encryptField(phone || null),
     status,
-  });
+    rsvpResponse: response,
+    answers: parsed.answers,
+  };
 
-  await sendTemplatedEmail({
-    type: "event_registration",
-    to: email,
-    vars: {
-      name,
-      eventTitle: event.title,
-      eventDate: formatDate(event.startsAt, "d MMMM yyyy, HH:mm"),
-    },
-  });
+  if (existing) {
+    await db.update(eventRegistrations).set(values).where(eq(eventRegistrations.id, existing.id));
+  } else {
+    await db.insert(eventRegistrations).values({ eventId, ...values });
+  }
+
+  const token = await ensureRsvpToken(event.id, event.rsvpToken);
+  const origin = await getRequestSiteUrl();
+  let emailFailed = false;
+  try {
+    await ensureEventEmailTemplates();
+    await sendTemplatedEmail({
+      type: "event_registration",
+      to: email,
+      role: "eventsFrom",
+      vars: {
+        name,
+        eventTitle: eventDisplayTitle(event),
+        eventDate: eventWhen(event),
+        venue: eventWhere(event),
+        response: responseSentence(response),
+        details: answersSummary(event.customFields ?? [], parsed.answers),
+        rsvpUrl: absoluteUrl(origin, rsvpPath(token)),
+      },
+    });
+  } catch {
+    emailFailed = true;
+  }
+
   revalidatePath(`/events/${event.slug}`);
-  return { ok: true, waitlist: isFull };
+  revalidatePath(rsvpPath(token));
+  return { ok: true, waitlist: status === "waitlist", updated: Boolean(existing), emailFailed, response };
 }

@@ -52,6 +52,9 @@ const FROM_ROLE_BY_TYPE: Record<string, MailFromRole> = {
   volunteer_received: "volunteersFrom",
   volunteer_accepted: "volunteersFrom",
   event_registration: "eventsFrom",
+  event_reminder: "eventsFrom",
+  event_invite: "eventsFrom",
+  event_update: "eventsFrom",
   contact_message: "membershipFrom",
 };
 

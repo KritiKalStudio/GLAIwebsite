@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { getDb } from "@/db";
 import { ambassadors, volunteerApplications } from "@/db/schema";
 import { getUpcomingEvents } from "@/lib/content/events";
+import { eventDisplayTitle } from "@/lib/events/portal";
 import { getActivePrograms } from "@/lib/content/programs";
 import { getPublishedOpportunitiesWithSlots } from "@/lib/content/volunteers";
 import { formatDate } from "@/lib/format";
@@ -95,7 +96,7 @@ export default async function DashboardPage({
           <p className="text-[10px] font-bold tracking-[0.14em] text-accent uppercase sm:text-[11px] sm:tracking-[0.16em]">Next event</p>
           {nextEvent ? (
             <>
-              <p className="mt-1 line-clamp-2 font-display text-sm text-brand sm:mt-2 sm:text-xl">{nextEvent.title}</p>
+              <p className="mt-1 line-clamp-2 font-display text-sm text-brand sm:mt-2 sm:text-xl">{eventDisplayTitle(nextEvent)}</p>
               <p className="mt-0.5 text-[10px] text-muted sm:mt-1 sm:text-sm">{formatDate(nextEvent.startsAt)}</p>
             </>
           ) : (
@@ -122,7 +123,7 @@ export default async function DashboardPage({
               events.map((event) => (
                 <li key={event.id}>
                   <a className="font-semibold text-brand underline" href={`/events/${event.slug}`}>
-                    {event.title}
+                    {eventDisplayTitle(event)}
                   </a>
                   <span className="block text-muted sm:inline sm:before:mx-1.5 sm:before:content-['·']">
                     {formatDate(event.startsAt)}
